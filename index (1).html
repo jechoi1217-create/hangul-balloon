@@ -1,0 +1,1596 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>한글 풍선 게임</title>
+<link href="https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+:root{--deep:#0f1e3d;--mint:#3ecfbf;--gold:#ffd93d;--green:#58c96a;}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{width:100%;height:100%;overflow:hidden;font-family:'Noto Sans KR',sans-serif;}
+body{background:linear-gradient(160deg,#c5e3ff 0%,#dff0ff 45%,#d5f5ef 100%);}
+
+.star-layer{position:fixed;inset:0;pointer-events:none;z-index:0;}
+.star{position:absolute;border-radius:50%;background:#fff;animation:twinkle var(--d,3s) ease-in-out infinite var(--dl,0s);}
+@keyframes twinkle{0%,100%{opacity:.15;transform:scale(1)}50%{opacity:.85;transform:scale(1.5)}}
+
+.cloud{position:fixed;pointer-events:none;z-index:1;}
+.cloud-a{top:5%;animation:dR 65s linear infinite;}
+.cloud-b{top:16%;animation:dR 85s linear infinite 18s;opacity:.6;}
+.cloud-c{top:3%;animation:dL 72s linear infinite 6s;}
+@keyframes dR{from{left:-340px}to{left:110vw}}
+@keyframes dL{from{right:-340px}to{right:110vw}}
+
+#startScreen,#gameScreen,#resultScreen{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:10;}
+.hidden{display:none!important;}
+
+/* ── START ── */
+#startScreen{background:transparent;}
+.logo-wrap{text-align:center;margin-bottom:16px;animation:floatY 3s ease-in-out infinite;}
+@keyframes floatY{0%,100%{transform:translateY(0)}50%{transform:translateY(-11px)}}
+.logo-title{font-family:'Gaegu',cursive;font-size:clamp(2.5rem,7.5vw,4.5rem);font-weight:700;letter-spacing:5px;
+  background:linear-gradient(160deg,#1a4faa,#1eaaa0,#6040c0);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  filter:drop-shadow(0 4px 0 rgba(30,170,160,.18));}
+.logo-sub{font-size:clamp(.8rem,2.2vw,.96rem);color:#4a6e8a;margin-top:4px;}
+.card{background:rgba(255,255,255,.83);backdrop-filter:blur(20px);border-radius:24px;padding:20px 24px;
+  max-width:480px;width:92%;border:1.5px solid rgba(255,255,255,.75);
+  box-shadow:0 4px 0 rgba(180,210,240,.6),0 8px 32px rgba(74,111,165,.12),inset 0 1px 0 #fff;}
+.slabel{font-size:.65rem;font-weight:700;letter-spacing:2px;color:#7ca0c0;text-transform:uppercase;margin-bottom:7px;}
+.cat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:14px;}
+.cat-btn{border:2px solid rgba(180,210,240,.55);background:linear-gradient(145deg,rgba(245,251,255,.95),rgba(225,240,255,.88));
+  border-radius:12px;padding:9px 4px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;
+  font-family:'Noto Sans KR',sans-serif;box-shadow:0 3px 0 rgba(160,200,235,.5),inset 0 1px 0 #fff;
+  transition:all .2s cubic-bezier(.34,1.56,.64,1);}
+.cat-btn:hover{transform:translateY(-2px);}
+.cat-btn.active{border-color:var(--mint);background:linear-gradient(145deg,#4eddd3,#2aaaa0);color:#fff;
+  box-shadow:0 4px 0 rgba(30,140,132,.6),0 7px 16px rgba(62,207,191,.4),inset 0 1px 0 rgba(255,255,255,.35);
+  transform:translateY(-2px);animation:catSel .4s cubic-bezier(.34,1.8,.64,1);}
+@keyframes catSel{0%{transform:translateY(-2px) scale(1)}40%{transform:translateY(-2px) scale(1.1)}100%{transform:translateY(-2px) scale(1)}}
+.cat-icon{font-size:1.7rem;filter:drop-shadow(0 1px 3px rgba(0,0,0,.12));}
+.cat-name{font-size:.7rem;font-weight:700;}
+.diff-row{display:flex;gap:6px;margin-bottom:14px;}
+.diff-btn{flex:1;border:2px solid rgba(180,210,240,.55);background:linear-gradient(145deg,rgba(245,251,255,.95),rgba(225,240,255,.88));
+  border-radius:10px;padding:8px 3px;cursor:pointer;font-family:'Noto Sans KR',sans-serif;font-size:.74rem;font-weight:700;color:#5a7a9a;
+  box-shadow:0 3px 0 rgba(160,200,235,.45),inset 0 1px 0 #fff;transition:all .2s;}
+.diff-btn:hover{transform:translateY(-2px);}
+.diff-btn.active{background:linear-gradient(145deg,#68bfff,#3a8fe0);border-color:#5aadff;color:#fff;
+  box-shadow:0 4px 0 rgba(30,100,190,.5),0 6px 14px rgba(90,173,255,.38);transform:translateY(-2px);}
+.lv-row{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:4px;}
+.lv-btn{flex:1;min-width:52px;border:2.5px solid rgba(160,200,235,.55);border-radius:12px;padding:9px 3px 7px;
+  cursor:pointer;font-family:'Gaegu',cursive;display:flex;flex-direction:column;align-items:center;gap:2px;
+  transition:all .2s cubic-bezier(.34,1.56,.64,1);}
+.lv-num{font-size:1.18rem;font-weight:900;line-height:1;}
+.lv-stars{font-size:.84rem;line-height:1;}
+.lv-req{font-size:.68rem;font-weight:700;line-height:1;}
+.lv-btn.locked{background:linear-gradient(145deg,rgba(225,230,242,.9),rgba(210,218,235,.85));color:#7a88aa;cursor:not-allowed;
+  box-shadow:0 3px 0 rgba(150,165,195,.38),inset 0 1px 0 #fff;position:relative;}
+.lv-btn.locked::after{content:'🔒';position:absolute;top:3px;right:4px;font-size:.68rem;opacity:.72;}
+.lv-btn.locked .lv-num,.lv-btn.locked .lv-req{color:#7a88aa;}
+.lv-btn.unlocked{background:linear-gradient(145deg,rgba(240,250,255,.97),rgba(218,238,255,.92));color:#1a4080;
+  box-shadow:0 4px 0 rgba(140,190,230,.48),inset 0 1px 0 #fff;}
+.lv-btn.unlocked .lv-num{color:#1a4080;font-size:1.24rem;}
+.lv-btn.unlocked .lv-req{color:#2860a0;}
+.lv-btn.unlocked:hover{transform:translateY(-2px);}
+.lv-btn.selected{border-color:var(--mint);background:linear-gradient(145deg,#4eddd3,#2aada0);color:#fff;
+  box-shadow:0 4px 0 rgba(20,140,132,.58),0 7px 16px rgba(62,207,191,.42),inset 0 1px 0 rgba(255,255,255,.38);
+  transform:translateY(-2px);animation:lvSel .4s cubic-bezier(.34,1.8,.64,1);}
+.lv-btn.selected .lv-num,.lv-btn.selected .lv-req{color:#fff;}
+@keyframes lvSel{0%{transform:translateY(-2px) scale(1)}40%{transform:translateY(-2px) scale(1.1)}100%{transform:translateY(-2px) scale(1)}}
+.best-badge{display:inline-flex;align-items:center;gap:4px;font-family:'Gaegu',cursive;font-size:.86rem;font-weight:700;
+  color:#5a3200;background:linear-gradient(135deg,#ffe566,#ffcc00);border-radius:10px;padding:3px 10px;margin-bottom:8px;
+  box-shadow:0 3px 0 rgba(180,130,0,.38);}
+.start-btn{width:100%;padding:13px;border:none;border-radius:16px;margin-top:12px;
+  background:linear-gradient(145deg,#6dd97a,#3aaa4e);color:#fff;font-family:'Gaegu',cursive;font-size:1.4rem;font-weight:700;cursor:pointer;
+  letter-spacing:3px;box-shadow:0 5px 0 rgba(30,120,50,.5),0 8px 22px rgba(88,201,106,.4),inset 0 1px 0 rgba(255,255,255,.32);
+  transition:all .18s cubic-bezier(.34,1.56,.64,1);}
+.start-btn:hover{transform:translateY(-3px);}
+.start-btn:active{transform:translateY(2px);}
+
+/* ── HEADER ── */
+#gameScreen{flex-direction:column;justify-content:flex-start;background:transparent;}
+.hdr{width:100%;display:flex;align-items:center;justify-content:space-between;padding:8px 12px;
+  background:rgba(255,255,255,.72);backdrop-filter:blur(14px);border-bottom:1.5px solid rgba(255,255,255,.6);z-index:20;}
+.hl{display:flex;align-items:center;gap:8px;}
+.score-box{background:linear-gradient(145deg,#ffe055,#f5b800);border-radius:11px;padding:5px 12px;
+  font-weight:900;font-size:1rem;color:#4a3000;box-shadow:0 3px 0 rgba(190,140,0,.38),inset 0 1px 0 rgba(255,255,255,.48);}
+.lives-box{display:flex;gap:3px;align-items:center;}
+.heart{font-size:1.3rem;display:inline-block;transform-origin:center;}
+.heart.pulse{animation:hrtP .5s cubic-bezier(.34,1.9,.64,1);}
+@keyframes hrtP{0%{transform:scale(1)}40%{transform:scale(1.8)}70%{transform:scale(.88)}100%{transform:scale(1)}}
+.spd-box{font-size:.64rem;font-weight:700;letter-spacing:1.5px;color:#6a90b0;background:rgba(255,255,255,.7);
+  border-radius:8px;padding:3px 8px;border:1px solid rgba(180,210,240,.5);}
+.hr{display:flex;align-items:center;gap:5px;}
+.icon-btn{border:1.5px solid rgba(180,210,240,.5);background:linear-gradient(145deg,rgba(250,253,255,.9),rgba(230,244,255,.88));
+  border-radius:9px;padding:5px 11px;cursor:pointer;font-size:.8rem;font-weight:700;color:#4a6e8a;
+  font-family:'Noto Sans KR',sans-serif;white-space:nowrap;box-shadow:0 2px 0 rgba(160,200,235,.42),inset 0 1px 0 #fff;transition:all .15s;}
+.icon-btn:hover{transform:translateY(-2px);}
+/* 오답 카운터 */
+.wrong-counter{display:flex;gap:3px;align-items:center;}
+.wrong-dot{width:10px;height:10px;border-radius:50%;background:rgba(200,80,80,.2);border:1.5px solid rgba(200,80,80,.3);transition:all .3s;}
+.wrong-dot.on{background:#e84040;border-color:#c03030;box-shadow:0 0 6px rgba(232,64,64,.5);}
+
+/* ── GAME AREA ── */
+#gameArea{flex:1;width:100%;position:relative;overflow:hidden;}
+.ground{position:absolute;bottom:0;left:0;right:0;height:70px;
+  background:linear-gradient(to top,rgba(110,195,125,.2),transparent);pointer-events:none;z-index:5;}
+
+/* TARGET */
+#targetArea{position:absolute;bottom:70px;left:50%;transform:translateX(-50%);
+  display:flex;flex-direction:column;align-items:center;gap:6px;z-index:15;pointer-events:none;
+  width:100%;}
+#targetImage{width:clamp(96px,19vw,136px);height:clamp(96px,19vw,136px);border-radius:22px;
+  background:linear-gradient(145deg,rgba(255,255,255,.98),rgba(232,248,255,.92));
+  display:flex;align-items:center;justify-content:center;
+  font-size:clamp(3rem,8.5vw,5rem);   /* ★ 이모지 더 크게 */
+  line-height:1;
+  /* 이모지 선명하게 렌더링 */
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+  box-shadow:0 6px 0 rgba(160,200,235,.5),0 10px 28px rgba(0,0,0,.1),inset 0 1px 0 #fff;
+  border:3px solid rgba(255,255,255,.95);}
+#targetWord{display:flex;gap:5px;align-items:center;}
+.char-slot{width:clamp(38px,9.5vw,58px);height:clamp(38px,9.5vw,58px);border-radius:11px;
+  background:linear-gradient(145deg,rgba(255,255,255,.85),rgba(228,242,255,.75));
+  border:2.5px dashed rgba(145,195,230,.8);display:flex;align-items:center;justify-content:center;
+  font-size:clamp(1.2rem,3.5vw,1.85rem);font-weight:900;color:var(--deep);
+  box-shadow:0 4px 0 rgba(155,200,235,.35),inset 0 1px 0 rgba(255,255,255,.9);
+  transition:all .3s cubic-bezier(.34,1.56,.64,1);
+  /* 빈 슬롯임을 표시하는 중앙 점 */
+  position:relative;}
+.char-slot:empty::after,.char-slot:not(.complete):not(.filled)::after{
+  content:'';position:absolute;width:8px;height:8px;border-radius:50%;
+  background:rgba(160,200,230,.5);}
+.char-slot.filled{border-color:rgba(62,207,191,.65);background:linear-gradient(145deg,rgba(215,250,248,.97),rgba(195,238,235,.88));}
+.char-slot.complete{border:2.5px solid rgba(88,201,106,.7);background:linear-gradient(145deg,rgba(215,248,225,.97),rgba(195,235,210,.88));color:var(--green);animation:slotPop .5s cubic-bezier(.34,1.56,.64,1);}
+@keyframes slotPop{0%{transform:scale(.7)}60%{transform:scale(1.15)}100%{transform:scale(1)}}
+.pdots{display:flex;gap:5px;}
+.dot{width:8px;height:8px;border-radius:50%;background:rgba(175,210,235,.62);transition:all .3s;}
+.dot.done{background:linear-gradient(135deg,var(--mint),#2aada0);box-shadow:0 2px 7px rgba(62,207,191,.52);transform:scale(1.25);}
+.dot.hint-pulse{animation:dotP .5s cubic-bezier(.34,1.9,.64,1) infinite alternate;}
+@keyframes dotP{from{transform:scale(1.1);}to{transform:scale(2.3);background:linear-gradient(135deg,#ffd93d,#f09000);box-shadow:0 0 16px rgba(255,210,0,.92);}}
+
+/* ── BALLOONS ── */
+.balloon{position:absolute;display:flex;flex-direction:column;align-items:center;
+  cursor:pointer;z-index:12;user-select:none;will-change:transform;}
+.balloon-body{border-radius:50% 50% 46% 46%;display:flex;align-items:center;justify-content:center;
+  font-size:clamp(1.95rem,5.4vw,2.95rem);font-weight:900;color:#fff;
+  text-shadow:0 2px 9px rgba(0,0,0,.38);position:relative;flex-shrink:0;
+  transition:transform .12s cubic-bezier(.34,1.56,.64,1);}
+.balloon-body::before{content:'';position:absolute;top:11%;left:17%;width:30%;height:24%;
+  background:radial-gradient(ellipse,rgba(255,255,255,.7) 0%,rgba(255,255,255,0) 70%);
+  border-radius:50%;transform:rotate(-30deg);pointer-events:none;}
+.balloon-body::after{content:'';position:absolute;bottom:16%;right:14%;width:17%;height:13%;
+  background:radial-gradient(ellipse,rgba(255,255,255,.36) 0%,rgba(255,255,255,0) 70%);
+  border-radius:50%;pointer-events:none;}
+/* hover 효과 없음 - 드래그로만 이동 */
+/* active 효과 없음 */
+.balloon-knot{clip-path:polygon(50% 0%,0% 100%,100% 100%);margin-top:-1px;flex-shrink:0;}
+.balloon-string{width:2px;height:38px;background:linear-gradient(to bottom,rgba(80,80,80,.28),transparent);flex-shrink:0;}
+@keyframes balloonFall{
+  from{transform:translateY(-200px) translateX(var(--dx,0px)) rotate(var(--tilt,0deg));opacity:0;}
+  6%{opacity:1;}
+  to{transform:translateY(115vh) translateX(calc(var(--dx,0px)*-.4)) rotate(var(--tilt,0deg));opacity:.85;}}
+.balloon.popping{animation:bPop .28s ease forwards!important;}
+@keyframes bPop{0%{transform:scale(1);opacity:1;}50%{transform:scale(1.6);opacity:.8;}100%{transform:scale(0);opacity:0;}}
+.balloon.wrongpop{animation:bWrong .28s ease forwards!important;}
+@keyframes bWrong{0%{filter:none;}50%{transform:scale(1.3);filter:brightness(.4) saturate(0);}100%{transform:scale(0);opacity:0;}}
+.balloon-body.hint-active{animation:hintAct .45s cubic-bezier(.34,1.9,.64,1) infinite alternate!important;}
+@keyframes hintAct{from{transform:scale(1);filter:brightness(1);}to{transform:scale(1.5);filter:brightness(1.3) drop-shadow(0 0 18px rgba(255,230,50,.9));}}
+
+.pop-p{position:absolute;border-radius:50%;pointer-events:none;z-index:22;animation:pFly var(--dur,.8s) ease forwards;}
+@keyframes pFly{0%{transform:translate(0,0) scale(1);opacity:1;}100%{transform:translate(var(--tx,0),var(--ty,0)) scale(0);opacity:0;}}
+
+.float-text{position:absolute;font-family:'Gaegu',cursive;font-size:1.45rem;font-weight:700;
+  pointer-events:none;z-index:30;white-space:nowrap;text-shadow:0 2px 7px rgba(0,0,0,.17);
+  animation:ftUp 1.15s ease forwards;}
+@keyframes ftUp{0%{opacity:1;transform:translateY(0) scale(1);}20%{transform:translateY(-18px) scale(1.28);}100%{opacity:0;transform:translateY(-88px) scale(.8);}}
+
+/* 배너/팝업 공통 */
+.banner-base{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) scale(0);
+  font-family:'Gaegu',cursive;font-weight:700;color:#fff;text-align:center;z-index:45;pointer-events:none;
+  padding:14px 30px;border-radius:20px;border:2px solid rgba(255,255,255,.38);backdrop-filter:blur(6px);}
+.banner-base.show{animation:banPop 2.2s cubic-bezier(.34,1.56,.64,1) forwards;}
+@keyframes banPop{0%{transform:translate(-50%,-50%) scale(0);opacity:0;}13%{transform:translate(-50%,-50%) scale(1.08);opacity:1;}19%{transform:translate(-50%,-50%) scale(1);opacity:1;}72%{transform:translate(-50%,-50%) scale(1);opacity:1;}100%{transform:translate(-50%,-50%) scale(.8);opacity:0;}}
+
+/* 글자 완성 팝업 (중앙 크게) */
+#charCompletePopup{position:absolute;top:42%;left:50%;transform:translate(-50%,-50%) scale(0);
+  font-family:'Gaegu',cursive;font-weight:700;color:#fff;text-align:center;z-index:46;pointer-events:none;
+  background:linear-gradient(135deg,rgba(62,207,191,.93),rgba(30,160,150,.93));
+  padding:14px 28px;border-radius:20px;border:2px solid rgba(255,255,255,.45);
+  box-shadow:0 8px 0 rgba(20,130,122,.4),0 14px 36px rgba(62,207,191,.5),inset 0 1px 0 rgba(255,255,255,.35);
+  backdrop-filter:blur(5px);white-space:nowrap;}
+#charCompletePopup.show{animation:charPop 1.4s cubic-bezier(.34,1.56,.64,1) forwards;}
+@keyframes charPop{
+  0%{transform:translate(-50%,-50%) scale(0);opacity:0;}
+  15%{transform:translate(-50%,-50%) scale(1.15);opacity:1;}
+  22%{transform:translate(-50%,-50%) scale(1);opacity:1;}
+  68%{transform:translate(-50%,-50%) scale(1);opacity:1;}
+  100%{transform:translate(-50%,-50%) scale(.7) translateY(-30px);opacity:0;}}
+
+/* 재도전 성공 배너 */
+#retrySuccessBanner{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) scale(0);
+  font-family:'Gaegu',cursive;font-weight:700;color:#fff;text-align:center;z-index:47;pointer-events:none;
+  background:linear-gradient(135deg,rgba(88,201,106,.94),rgba(40,160,60,.94));
+  padding:18px 32px;border-radius:22px;border:2px solid rgba(255,255,255,.4);
+  box-shadow:0 8px 0 rgba(30,140,50,.4),0 14px 36px rgba(88,201,106,.5),inset 0 1px 0 rgba(255,255,255,.35);
+  backdrop-filter:blur(6px);}
+#retrySuccessBanner.show{animation:banPop 2.5s cubic-bezier(.34,1.56,.64,1) forwards;}
+
+#levelBanner{font-size:clamp(1.75rem,5.2vw,2.9rem);
+  background:linear-gradient(135deg,rgba(88,173,255,.92),rgba(150,138,255,.92));
+  box-shadow:0 7px 0 rgba(40,100,200,.33),0 12px 34px rgba(90,173,255,.42),inset 0 1px 0 rgba(255,255,255,.32);}
+#failBanner{font-size:clamp(1.5rem,4.8vw,2.6rem);
+  background:linear-gradient(135deg,rgba(220,60,60,.95),rgba(180,30,30,.95));
+  box-shadow:0 7px 0 rgba(150,20,20,.45),0 12px 38px rgba(220,60,60,.5),inset 0 1px 0 rgba(255,255,255,.28);
+  /* ★ 클릭 가능하게 */
+  pointer-events:auto !important;cursor:pointer;}
+/* 실패 시 반투명 오버레이 (풍선 클릭 차단) */
+#failOverlay{position:absolute;inset:0;background:rgba(0,0,0,.35);z-index:44;
+  display:none;cursor:pointer;}
+#failOverlay.show{display:block;}
+/* 클릭 유도 텍스트 */
+#failBanner .tap-hint{display:block;font-size:clamp(.75rem,2.2vw,.95rem);
+  opacity:.82;margin-top:6px;letter-spacing:1px;
+  animation:tapBlink 1s ease-in-out infinite alternate;}
+@keyframes tapBlink{from{opacity:.6}to{opacity:1}}
+
+#hintOverlay{display:none;position:absolute;top:52px;left:50%;transform:translateX(-50%);
+  font-family:'Gaegu',cursive;font-size:.92rem;color:#e8a000;font-weight:700;
+  background:rgba(255,248,200,.92);border-radius:9px;padding:4px 13px;z-index:17;
+  box-shadow:0 3px 9px rgba(240,180,0,.38);border:2px solid rgba(255,210,0,.58);white-space:nowrap;pointer-events:none;}
+
+/* HINT BALLOON */
+.hint-balloon{position:absolute;display:flex;flex-direction:column;align-items:center;
+  cursor:pointer;z-index:16;user-select:none;animation:hintRise var(--spd,18s) linear forwards;}
+.hint-body{border-radius:50% 50% 46% 46%;display:flex;align-items:center;justify-content:center;
+  flex-direction:column;gap:3px;padding:10% 8% 16%;
+  background:radial-gradient(circle at 34% 28%,#fffce8,#ffe600,#e8a000);
+  flex-shrink:0;position:relative;overflow:hidden;
+  animation:hintPulse .95s cubic-bezier(.34,1.56,.64,1) infinite alternate;}
+.hint-body::before{content:'';position:absolute;top:8%;left:14%;width:34%;height:26%;
+  background:radial-gradient(ellipse,rgba(255,255,255,.82) 0%,rgba(255,255,255,0) 70%);
+  border-radius:50%;transform:rotate(-28deg);pointer-events:none;}
+.hint-tag{font-family:'Gaegu',cursive;font-weight:700;color:#6a3000;letter-spacing:1.5px;line-height:1;text-shadow:0 1px 0 rgba(255,255,255,.65);}
+.hint-word{font-family:'Gaegu',cursive;font-weight:700;color:#2a1000;line-height:1.1;text-align:center;text-shadow:0 2px 5px rgba(0,0,0,.2),0 1px 0 rgba(255,255,255,.48);}
+.hint-knot{clip-path:polygon(50% 0%,0% 100%,100% 100%);background:#a07000;margin-top:-1px;flex-shrink:0;}
+.hint-string{width:2.5px;height:50px;background:linear-gradient(to bottom,rgba(70,70,70,.28),transparent);flex-shrink:0;}
+@keyframes hintRise{from{transform:translateY(120vh) rotate(var(--tilt,0deg));opacity:0;}8%{opacity:1;}to{transform:translateY(-260px) rotate(var(--tilt,0deg));opacity:.95;}}
+@keyframes hintPulse{from{transform:scale(1);box-shadow:0 0 0 4px rgba(255,230,0,.42),0 12px 30px rgba(240,175,0,.6),0 5px 0 #a07000;}
+  to{transform:scale(1.25);box-shadow:0 0 0 13px rgba(255,238,0,.68),0 20px 50px rgba(240,180,0,.98),0 5px 0 #a07000,0 0 44px rgba(255,242,0,.88);}}
+
+/* MINI BALLOONS */
+.mini-balloon{position:absolute;z-index:30;cursor:pointer;display:flex;flex-direction:column;align-items:center;
+  animation:miniRise var(--dur,6s) ease-out forwards,miniDrift calc(var(--dur,6s)*.55) ease-in-out infinite;}
+.mini-body{border-radius:50% 50% 46% 46%;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.32);position:relative;flex-shrink:0;}
+.mini-body::before{content:'';position:absolute;top:12%;left:18%;width:28%;height:22%;
+  background:radial-gradient(ellipse,rgba(255,255,255,.68) 0%,transparent 70%);border-radius:50%;transform:rotate(-28deg);}
+.mini-string{width:1.5px;height:18px;background:linear-gradient(to bottom,rgba(80,80,80,.26),transparent);flex-shrink:0;}
+@keyframes miniRise{0%{transform:translate(var(--sx,0px),0px) scale(.4) rotate(var(--rot,0deg));opacity:0;}12%{opacity:.9;}100%{opacity:.8;transform:translate(0px,var(--fy,-290px)) scale(.88) rotate(calc(var(--rot,0deg)*-.18));}}
+@keyframes miniDrift{0%,100%{margin-left:0}50%{margin-left:var(--d1,13px)}}
+
+/* PAUSE */
+#pauseOverlay{position:fixed;inset:0;background:rgba(10,22,52,.68);backdrop-filter:blur(9px);z-index:55;
+  display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;}
+.pause-title{font-family:'Gaegu',cursive;font-size:2.4rem;color:#fff;letter-spacing:5px;}
+.ov-btn{padding:11px 34px;border:none;border-radius:15px;font-family:'Gaegu',cursive;font-size:1.18rem;
+  cursor:pointer;min-width:180px;text-align:center;transition:all .2s cubic-bezier(.34,1.56,.64,1);}
+.ov-btn:hover{transform:scale(1.07) translateY(-2px);}
+.btn-res{background:linear-gradient(145deg,#4eddd3,#2aada0);color:#fff;box-shadow:0 5px 0 rgba(20,130,122,.48),0 7px 18px rgba(62,207,191,.36);}
+.btn-mnu{background:linear-gradient(145deg,rgba(255,160,110,.9),rgba(220,110,60,.85));color:#fff;box-shadow:0 5px 0 rgba(180,80,30,.38);}
+.btn-qit{background:rgba(255,255,255,.14);color:rgba(255,255,255,.8);border:1.5px solid rgba(255,255,255,.26);}
+
+/* RESULT */
+#resultScreen{background:rgba(242,251,255,.95);backdrop-filter:blur(22px);}
+.res-card{background:#fff;border-radius:22px;padding:24px 24px 20px;text-align:center;
+  max-width:420px;width:91%;max-height:88vh;overflow-y:auto;
+  box-shadow:0 7px 0 rgba(160,200,235,.38),0 16px 46px rgba(74,111,165,.12),inset 0 1px 0 #fff;
+  border:1.5px solid rgba(215,238,255,.8);}
+.res-emoji{font-size:3.6rem;margin-bottom:5px;animation:floatY 2.5s ease-in-out infinite;}
+.res-title{font-family:'Gaegu',cursive;font-size:1.85rem;color:var(--deep);margin-bottom:14px;}
+.res-stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;}
+.stat-item{background:linear-gradient(145deg,#f0f8ff,#e5f3ff);border-radius:12px;padding:11px;
+  box-shadow:0 3px 0 rgba(155,200,235,.38),inset 0 1px 0 #fff;}
+.stat-num{font-size:1.7rem;font-weight:900;color:var(--deep);}
+.stat-lbl{font-size:.67rem;color:#7ca0c0;font-weight:700;margin-top:2px;letter-spacing:1px;}
+.stat-item.wrong-stat .stat-num{color:#e04040;}
+.stat-item.wrong-stat{background:linear-gradient(145deg,#fff0f0,#ffe0e0);box-shadow:0 3px 0 rgba(220,100,100,.28),inset 0 1px 0 #fff;}
+
+/* 틀린 단어 섹션 */
+.wrong-words-section{margin-bottom:14px;}
+.wrong-words-title{font-family:'Gaegu',cursive;font-size:.88rem;font-weight:700;color:#6a3a00;margin-bottom:8px;
+  background:linear-gradient(135deg,rgba(255,220,80,.2),rgba(255,200,50,.12));
+  border:1.5px solid rgba(255,200,60,.35);border-radius:10px;padding:5px 12px;}
+.wrong-word-grid{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-bottom:10px;}
+.wrong-word-chip{display:inline-flex;align-items:center;gap:5px;cursor:pointer;
+  background:linear-gradient(145deg,#fff4f4,#ffe8e8);
+  border:2px solid rgba(220,80,80,.3);border-radius:12px;padding:6px 12px;
+  font-family:'Gaegu',cursive;font-size:1rem;font-weight:700;color:#c03030;
+  box-shadow:0 3px 0 rgba(200,60,60,.25),inset 0 1px 0 #fff;
+  transition:all .18s cubic-bezier(.34,1.56,.64,1);}
+.wrong-word-chip:hover{transform:translateY(-2px) scale(1.05);box-shadow:0 5px 0 rgba(200,60,60,.28),0 6px 14px rgba(220,80,80,.22);}
+.wrong-word-chip .chip-emoji{font-size:1.2rem;}
+.wrong-word-chip .chip-word{font-size:.95rem;}
+.wrong-word-chip .chip-cnt{font-size:.65rem;color:#e06060;background:rgba(220,80,80,.12);border-radius:8px;padding:1px 6px;}
+
+/* 재도전 안내 */
+.retry-hint{font-family:'Gaegu',cursive;font-size:.8rem;color:#8090a8;margin-bottom:10px;line-height:1.45;}
+
+.res-btns{display:flex;gap:8px;margin-top:2px;}
+.rbtn{flex:1;padding:12px;border:none;border-radius:14px;font-family:'Gaegu',cursive;font-size:1rem;cursor:pointer;transition:all .2s;}
+.rbtn:hover{transform:translateY(-2px);}
+.rbtn-replay{background:linear-gradient(145deg,#4eddd3,#2aada0);color:#fff;box-shadow:0 4px 0 rgba(20,130,122,.48),0 7px 16px rgba(62,207,191,.32);}
+.rbtn-retry{background:linear-gradient(145deg,#ff8c5a,#e05a28);color:#fff;box-shadow:0 4px 0 rgba(180,60,20,.45),0 7px 16px rgba(230,90,40,.3);}
+.rbtn-menu{background:linear-gradient(145deg,#e8f4ff,#d8ecff);color:#5a7a9a;box-shadow:0 4px 0 rgba(155,200,235,.42);}
+.unlock-notice{background:linear-gradient(135deg,#fffbe0,#fff3b0);border:2px solid rgba(255,210,0,.48);
+  border-radius:12px;padding:8px 12px;margin-top:10px;font-family:'Gaegu',cursive;font-size:.9rem;font-weight:700;
+  color:#6a3a00;text-align:center;box-shadow:0 3px 0 rgba(200,150,0,.28);animation:unlockPop .5s cubic-bezier(.34,1.56,.64,1);}
+@keyframes unlockPop{0%{transform:scale(.6)}100%{transform:scale(1)}}
+
+#lockToast{position:fixed;bottom:68px;left:50%;transform:translateX(-50%) translateY(20px);
+  background:linear-gradient(135deg,rgba(30,40,70,.96),rgba(20,30,60,.96));
+  color:#fff;font-family:'Gaegu',cursive;font-size:.95rem;font-weight:700;
+  padding:11px 18px;border-radius:15px;z-index:200;box-shadow:0 7px 26px rgba(0,0,0,.33);
+  border:1.5px solid rgba(255,255,255,.11);text-align:center;line-height:1.5;
+  opacity:0;pointer-events:none;transition:opacity .3s,transform .3s;max-width:280px;width:88%;}
+#lockToast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+#fwCanvas{position:fixed;inset:0;pointer-events:none;z-index:100;}
+body.level5{background:linear-gradient(160deg,#1a1a3e 0%,#2a1a4e 45%,#1a2a3e 100%)!important;}
+body.level5 .star{background:rgba(255,255,255,.95)!important;}
+@keyframes cheerPop{
+  0%{transform:translateX(-50%) scale(0) rotate(-10deg);opacity:0;}
+  25%{transform:translateX(-50%) scale(1.2) rotate(5deg);opacity:1;}
+  40%{transform:translateX(-50%) scale(1) rotate(-2deg);opacity:1;}
+  75%{transform:translateX(-50%) scale(1.05) rotate(0deg);opacity:1;}
+  100%{transform:translateX(-50%) scale(.8) translateY(-40px);opacity:0;}
+}
+
+/* ── 핸드폰 최적화 ── */
+@media (max-width:480px){
+  .card{padding:14px 15px;border-radius:18px;}
+  .slabel{font-size:.6rem;margin-bottom:5px;}
+  .cat-grid{gap:5px;margin-bottom:11px;}
+  .cat-btn{padding:7px 3px;border-radius:10px;}
+  .cat-icon{font-size:1.5rem;}
+  .cat-name{font-size:.62rem;}
+  .diff-btn{font-size:.68rem;padding:7px 2px;}
+  .lv-btn{padding:7px 2px 5px;}
+  .lv-num{font-size:1rem;}
+  .lv-req{font-size:.6rem;}
+  .start-btn{font-size:1.2rem;padding:11px;}
+  .hdr{padding:6px 9px;}
+  .score-box{font-size:.88rem;padding:4px 9px;}
+  .heart{font-size:1.1rem;}
+  .icon-btn{font-size:.72rem;padding:4px 8px;}
+  #targetImage{width:clamp(72px,16vw,96px)!important;height:clamp(72px,16vw,96px)!important;font-size:clamp(2.2rem,7vw,3.5rem)!important;}
+  .char-slot{width:clamp(34px,9.5vw,52px)!important;height:clamp(34px,9.5vw,52px)!important;font-size:clamp(1.1rem,3.5vw,1.6rem)!important;}
+  .balloon-body{font-size:clamp(1.7rem,6vw,2.5rem)!important;}
+}
+
+/* ── 풍선 드래그(밀기) ── */
+.balloon{touch-action:none;}
+
+/* ── 진행 표시바 (누를때마다 어디까지 눌렀는지) ── */
+#progressBar{
+  display:flex;flex-direction:column;align-items:center;gap:4px;
+  pointer-events:none;
+  margin-top:2px;
+}
+#progressBarInner{
+  display:flex;gap:4px;align-items:center;
+  background:rgba(255,255,255,.82);backdrop-filter:blur(8px);
+  border-radius:14px;padding:7px 12px;
+  box-shadow:0 3px 12px rgba(0,0,0,.1);border:1.5px solid rgba(255,255,255,.7);
+}
+.pb-jamo{
+  width:clamp(28px,7vw,40px);height:clamp(28px,7vw,40px);
+  border-radius:9px;display:flex;align-items:center;justify-content:center;
+  font-size:clamp(1rem,3vw,1.4rem);font-weight:900;
+  border:2px dashed rgba(160,210,235,.7);
+  background:linear-gradient(145deg,rgba(245,251,255,.95),rgba(225,240,255,.88));
+  color:#9ab0c8;transition:all .3s cubic-bezier(.34,1.56,.64,1);
+}
+.pb-jamo.done{
+  border-color:var(--mint);background:linear-gradient(145deg,rgba(215,250,248,.97),rgba(195,238,235,.88));
+  color:#1a8a80;font-size:clamp(1.1rem,3.2vw,1.5rem);
+}
+.pb-jamo.current{
+  border-color:#ffd93d;background:linear-gradient(145deg,#fffbe0,#fff3b0);
+  color:#c08000;animation:pbCurrent .7s ease-in-out infinite alternate;
+}
+@keyframes pbCurrent{from{transform:scale(1);}to{transform:scale(1.12);box-shadow:0 0 10px rgba(255,210,0,.6);}}
+.pb-label{font-family:'Gaegu',cursive;font-size:.75rem;font-weight:700;color:#7a9ab8;letter-spacing:1px;}
+
+/* ── 풍선 바닥 충돌 표시 ── */
+.balloon.hitting-ground{animation:hitGround .3s ease forwards!important;}
+@keyframes hitGround{0%{transform:scale(1);opacity:1;}50%{transform:scale(1.3,.7);opacity:.8;}100%{transform:scale(0);opacity:0;}}
+</style>
+</head>
+<body>
+<div class="star-layer" id="starLayer"></div>
+<div class="cloud cloud-a"><svg width="300" height="96" viewBox="0 0 300 96" fill="none"><ellipse cx="150" cy="72" rx="138" ry="28" fill="rgba(255,255,255,.72)"/><ellipse cx="95" cy="55" rx="68" ry="44" fill="rgba(255,255,255,.72)"/><ellipse cx="175" cy="48" rx="78" ry="48" fill="rgba(255,255,255,.72)"/><ellipse cx="248" cy="62" rx="55" ry="34" fill="rgba(255,255,255,.72)"/></svg></div>
+<div class="cloud cloud-b"><svg width="210" height="72" viewBox="0 0 210 72" fill="none"><ellipse cx="105" cy="54" rx="96" ry="22" fill="rgba(255,255,255,.62)"/><ellipse cx="68" cy="42" rx="52" ry="34" fill="rgba(255,255,255,.62)"/><ellipse cx="138" cy="36" rx="60" ry="38" fill="rgba(255,255,255,.62)"/></svg></div>
+<div class="cloud cloud-c"><svg width="260" height="84" viewBox="0 0 260 84" fill="none"><ellipse cx="130" cy="64" rx="118" ry="26" fill="rgba(255,255,255,.68)"/><ellipse cx="80" cy="50" rx="62" ry="40" fill="rgba(255,255,255,.68)"/><ellipse cx="162" cy="43" rx="72" ry="44" fill="rgba(255,255,255,.68)"/><ellipse cx="220" cy="58" rx="47" ry="30" fill="rgba(255,255,255,.68)"/></svg></div>
+<canvas id="fwCanvas"></canvas>
+<div id="lockToast"></div>
+
+<!-- START -->
+<div id="startScreen">
+  <div class="logo-wrap"><div class="logo-title">🎈 한글 풍선</div><div class="logo-sub">풍선을 터뜨려 글자를 완성해요!</div></div>
+  <div class="card">
+    <div class="slabel">📚 카테고리 (중복 선택 가능)</div>
+    <div class="cat-grid" id="catGrid"></div>
+    <div class="slabel">⚡ 난이도</div>
+    <div class="diff-row">
+      <button class="diff-btn active" data-diff="easy">🐢 쉬움</button>
+      <button class="diff-btn" data-diff="normal">🐇 보통</button>
+      <button class="diff-btn" data-diff="hard">🚀 어려움</button>
+    </div>
+    <div class="slabel">🎯 시작 레벨</div>
+    <div id="bestBadge" class="best-badge" style="display:none;">🏆 최고 점수: <span id="bestVal">0</span>점</div>
+    <div class="lv-row" id="lvRow"></div>
+    <div id="catRec" style="margin-top:5px;display:flex;flex-wrap:wrap;gap:4px;"></div>
+    <button class="start-btn" id="startBtn">시작하기 🎮</button>
+  </div>
+</div>
+
+<!-- GAME -->
+<div id="gameScreen" class="hidden">
+  <div class="hdr">
+    <div class="hl">
+      <div class="score-box">⭐ <span id="scoreVal">0</span></div>
+      <div class="lives-box" id="livesBox"></div>
+      <div class="wrong-counter" id="wrongCounter"></div>
+      <div class="spd-box" id="spdBox">Lv.1</div>
+    </div>
+    <div class="hr">
+      <div class="pdots" id="progressDots"></div>
+      <button class="icon-btn" id="pauseBtn">⏸ 정지</button>
+      <button class="icon-btn" id="menuBtnGame">🏠 메뉴</button>
+    </div>
+  </div>
+  <div id="gameArea">
+    <div id="levelBanner" class="banner-base"></div>
+    <div id="failOverlay"></div>
+    <div id="failBanner" class="banner-base"></div>
+    <div id="charCompletePopup"></div>
+    <div id="retrySuccessBanner"></div>
+    <div id="hintOverlay">💡 힌트 풍선을 터뜨려요!</div>
+    <div id="targetArea">
+      <div id="targetImage">🐶</div>
+      <div id="targetWord"></div>
+      <!-- 자모 순서 표시: 그림 바로 아래 -->
+      <div id="progressBar">
+        <div class="pb-label">👆 이 순서로 풍선을 터뜨려요!</div>
+        <div id="progressBarInner"></div>
+      </div>
+    </div>
+    <div class="ground"></div>
+  </div>
+</div>
+
+<!-- PAUSE -->
+<div id="pauseOverlay" class="hidden">
+  <div class="pause-title">⏸ 일시정지</div>
+  <button class="ov-btn btn-res" id="resumeBtn">▶ 계속하기</button>
+  <button class="ov-btn btn-mnu" id="menuBtnOv">🏠 카테고리 바꾸기</button>
+  <button class="ov-btn btn-qit" id="quitBtn">✕ 게임 종료</button>
+</div>
+
+<!-- RESULT -->
+<div id="resultScreen" class="hidden">
+  <div class="res-card">
+    <div class="res-emoji" id="rEmoji">🎉</div>
+    <div class="res-title" id="rTitle">게임 종료!</div>
+    <div id="rCatInfo" style="font-family:'Gaegu',cursive;font-size:.8rem;color:#6a90b0;margin-bottom:4px;font-weight:700;"></div>
+    <div class="res-stats">
+      <div class="stat-item"><div class="stat-num" id="rScore">0</div><div class="stat-lbl">최종 점수</div></div>
+      <div class="stat-item"><div class="stat-num" id="rWords">0</div><div class="stat-lbl">완성한 단어</div></div>
+      <div class="stat-item" id="rCorrectItem"><div class="stat-num" id="rCorrect">0</div><div class="stat-lbl" id="rCorrectLbl">맞은 글자</div></div>
+      <div class="stat-item"><div class="stat-num" id="rLevel">1</div><div class="stat-lbl">도달한 레벨</div></div>
+    </div>
+    <!-- 틀린 단어 섹션 -->
+    <div id="wrongWordsSec" class="wrong-words-section" style="display:none;">
+      <div class="wrong-words-title">😅 틀렸던 단어 — 눌러서 다시 연습!</div>
+      <div class="wrong-word-grid" id="wrongWordGrid"></div>
+      <div class="retry-hint">단어 칩을 누르면 그 단어만 골라서 다시 연습할 수 있어요 💪</div>
+    </div>
+    <div id="unlockNotice" style="display:none;"></div>
+    <div class="res-btns" id="resBtns">
+      <button class="rbtn rbtn-replay" id="replayBtn">🔄 다시하기</button>
+      <button class="rbtn rbtn-menu" id="menuBtn">🏠 메뉴</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════
+//  DATA
+// ══════════════════════════════════════
+const CATS={
+  동물:{icon:'🐶',words:[
+    {word:'강아지',emoji:'🐶'}, // 명확한 얼굴
+    {word:'고양이',emoji:'🐱'},
+    {word:'토끼',emoji:'🐰'},
+    {word:'코끼리',emoji:'🐘'},
+    {word:'기린',emoji:'🦒'},
+    {word:'사자',emoji:'🦁'},
+    {word:'원숭이',emoji:'🐵'},
+    {word:'펭귄',emoji:'🐧'},
+    {word:'돼지',emoji:'🐷'},
+    {word:'병아리',emoji:'🐥'}, // 오리→병아리(더 귀엽고 명확)
+    {word:'곰',emoji:'🐻'},
+    {word:'호랑이',emoji:'🐯'}]},
+  과일:{icon:'🍎',words:[
+    {word:'사과',emoji:'🍎'},
+    {word:'바나나',emoji:'🍌'},
+    {word:'포도',emoji:'🍇'},
+    {word:'딸기',emoji:'🍓'},
+    {word:'수박',emoji:'🍉'},
+    {word:'오렌지',emoji:'🍊'}, // 귤→오렌지(더 명확)
+    {word:'복숭아',emoji:'🍑'},
+    {word:'레몬',emoji:'🍋'},
+    {word:'체리',emoji:'🍒'},
+    {word:'파인애플',emoji:'🍍'},
+    {word:'포도',emoji:'🍇'},
+    {word:'망고',emoji:'🥭'}]},
+  음식:{icon:'🍕',words:[
+    {word:'피자',emoji:'🍕'},
+    {word:'햄버거',emoji:'🍔'},
+    {word:'라면',emoji:'🍜'},
+    {word:'케이크',emoji:'🎂'},
+    {word:'아이스크림',emoji:'🍦'},
+    {word:'도넛',emoji:'🍩'},
+    {word:'쿠키',emoji:'🍪'},
+    {word:'사탕',emoji:'🍬'},
+    {word:'초콜릿',emoji:'🍫'},
+    {word:'팝콘',emoji:'🍿'},
+    {word:'김밥',emoji:'🍱'}, // 도시락박스로 표현
+    {word:'주먹밥',emoji:'🍙'}]},
+  탈것:{icon:'🚗',words:[
+    {word:'자동차',emoji:'🚗'},
+    {word:'버스',emoji:'🚌'},
+    {word:'택시',emoji:'🚕'},
+    {word:'소방차',emoji:'🚒'},
+    {word:'경찰차',emoji:'🚓'},
+    {word:'트럭',emoji:'🚛'},
+    {word:'기차',emoji:'🚂'}, // 더 명확한 기차
+    {word:'비행기',emoji:'✈️'},
+    {word:'헬기',emoji:'🚁'},
+    {word:'로켓',emoji:'🚀'},
+    {word:'자전거',emoji:'🚲'},
+    {word:'배',emoji:'🚢'}]}, // 큰 배로
+  자연:{icon:'🌈',words:[
+    {word:'해',emoji:'☀️'},
+    {word:'달',emoji:'🌙'},
+    {word:'별',emoji:'⭐'},
+    {word:'무지개',emoji:'🌈'},
+    {word:'눈사람',emoji:'⛄'},
+    {word:'꽃',emoji:'🌸'},
+    {word:'나무',emoji:'🌳'},
+    {word:'나비',emoji:'🦋'},
+    {word:'무당벌레',emoji:'🐞'},
+    {word:'물고기',emoji:'🐠'},
+    {word:'거북이',emoji:'🐢'},
+    {word:'개구리',emoji:'🐸'}]},
+  학교:{icon:'🎒',words:[
+    {word:'가방',emoji:'🎒'},
+    {word:'연필',emoji:'✏️'},
+    {word:'색연필',emoji:'🖍️'},
+    {word:'책',emoji:'📖'},
+    {word:'가위',emoji:'✂️'},
+    {word:'지구본',emoji:'🌍'},
+    {word:'시계',emoji:'🕐'},
+    {word:'전화기',emoji:'📞'},
+    {word:'컴퓨터',emoji:'💻'},
+    {word:'피아노',emoji:'🎹'},
+    {word:'축구공',emoji:'⚽'},
+    {word:'선물',emoji:'🎁'}]}
+};
+const BST=[
+  {bg:'radial-gradient(circle at 34% 30%,#ff9090,#d82828)',kn:'#a81818',sh:'rgba(216,40,40,.5)'},
+  {bg:'radial-gradient(circle at 34% 30%,#ffe268,#e0a800)',kn:'#b08000',sh:'rgba(224,168,0,.5)'},
+  {bg:'radial-gradient(circle at 34% 30%,#7de890,#24a036)',kn:'#167028',sh:'rgba(36,160,54,.5)'},
+  {bg:'radial-gradient(circle at 34% 30%,#7ec8ff,#2482d8)',kn:'#1458a8',sh:'rgba(36,130,216,.5)'},
+  {bg:'radial-gradient(circle at 34% 30%,#c8b2ff,#7048e0)',kn:'#4820b0',sh:'rgba(112,72,224,.5)'},
+  {bg:'radial-gradient(circle at 34% 30%,#ffaae4,#e03898)',kn:'#b01870',sh:'rgba(224,56,152,.5)'},
+  {bg:'radial-gradient(circle at 34% 30%,#58e8e0,#14a8a0)',kn:'#0c7878',sh:'rgba(20,168,160,.5)'},
+  {bg:'radial-gradient(circle at 34% 30%,#ffba7a,#d86818)',kn:'#a84800',sh:'rgba(216,104,24,.5)'},
+];
+const FAIL_MSG=['아쉬워요! 다시 도전! 💪','조금만 더 빨리요! 🏃','파이팅! 할 수 있어요! 🔥','아깝다! 한 번 더! 😤','집중해요! 거의 다 됐어요! 👀','느려요! 더 빨리요! 💨'];
+// 레벨별 오답 허용 횟수 (Lv1~5)
+const WRONG_LIMIT=[0, 5, 5, 4, 4, 3];
+const LSTARS=['','','⭐','⭐⭐','⭐⭐⭐','🔥'];
+const UNL=[0,0,200,500,1000,2000];
+const LV_BASE=[0,0,2,5,8,11];
+
+// ══════════════════════════════════════
+//  AUDIO
+// ══════════════════════════════════════
+let AC=null;
+function getAC(){if(!AC){try{AC=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}}if(AC&&AC.state==='suspended')AC.resume();return AC;}
+function tone(f,t,d,v=.33,a=.01){const ctx=getAC();if(!ctx)return;const o=ctx.createOscillator(),g=ctx.createGain();o.connect(g);g.connect(ctx.destination);o.type=t;o.frequency.setValueAtTime(f,ctx.currentTime);g.gain.setValueAtTime(0,ctx.currentTime);g.gain.linearRampToValueAtTime(v,ctx.currentTime+a);g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+d);o.start();o.stop(ctx.currentTime+d);}
+// 귀여운 효과음들
+function sndOk(){
+  // 뽕뽕! 귀여운 맞춤 소리
+  tone(880,'sine',.06,.4);
+  setTimeout(()=>tone(1109,'sine',.06,.4),60);
+  setTimeout(()=>tone(1318,'sine',.12,.4),120);
+}
+function sndBad(){
+  // 뿅~ 틀림 소리
+  const ctx=getAC();if(!ctx)return;
+  const o=ctx.createOscillator(),g=ctx.createGain();
+  o.connect(g);g.connect(ctx.destination);
+  o.type='sine';
+  o.frequency.setValueAtTime(600,ctx.currentTime);
+  o.frequency.exponentialRampToValueAtTime(200,ctx.currentTime+.25);
+  g.gain.setValueAtTime(.35,ctx.currentTime);
+  g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+.25);
+  o.start();o.stop(ctx.currentTime+.25);
+}
+function sndFail(){
+  // 우우우~ 실패 소리
+  tone(400,'sawtooth',.08,.22);
+  setTimeout(()=>tone(350,'sawtooth',.1,.22),90);
+  setTimeout(()=>tone(280,'sawtooth',.2,.22),200);
+}
+function sndWord(){
+  // 빠라라라라빰! 단어완성 팡파르
+  const melody=[523,659,784,659,784,1047];
+  melody.forEach((f,i)=>setTimeout(()=>tone(f,'sine',.18,.38),i*70));
+  setTimeout(()=>{
+    tone(1047,'sine',.5,.4);
+    setTimeout(()=>tone(1319,'sine',.5,.4),80);
+    setTimeout(()=>tone(1568,'sine',.6,.4),160);
+  },melody.length*70+30);
+}
+// ── 칭찬 팝업 + 귀여운 효과음 (음성 없음 — 브라우저 기계음 제거)
+const CHEER_LIST=[
+  {txt:'와~~ 멋져! 🎉',  color:'#ff6b9d'},
+  {txt:'대박이야! 🌟',   color:'#ff9500'},
+  {txt:'오예~ 굿잡! 👍', color:'#34c759'},
+  {txt:'짝짝짝 👏👏',    color:'#5856d6'},
+  {txt:'완전 천재! 🏆',  color:'#ff3b30'},
+  {txt:'으쌰으쌰! 💪',  color:'#007aff'},
+  {txt:'최고야~! ✨',    color:'#ff9f0a'},
+  {txt:'신난다~ 🎊',    color:'#30d158'},
+  {txt:'대단해! 🌈',    color:'#bf5af2'},
+  {txt:'야호~ 🙌',      color:'#ff6b6b'},
+];
+let cheerIdx=0;
+
+function speakCheer(){
+  const item=CHEER_LIST[cheerIdx%CHEER_LIST.length];
+  cheerIdx++;
+  showCheerPopup(item.txt, item.color);
+  playCheerSound();
+}
+
+function showCheerPopup(txt,color){
+  document.querySelectorAll('.cheer-popup').forEach(e=>e.remove());
+  const el=document.createElement('div');
+  el.className='cheer-popup';
+  el.textContent=txt;
+  el.style.cssText=`
+    position:fixed;top:32%;left:50%;transform:translateX(-50%) scale(0);
+    font-family:'Gaegu',cursive;font-size:clamp(2rem,6.5vw,3.2rem);font-weight:700;
+    color:${color};text-shadow:0 3px 14px rgba(0,0,0,.18),0 0 32px ${color}99;
+    white-space:nowrap;z-index:200;pointer-events:none;
+    filter:drop-shadow(0 4px 0 rgba(0,0,0,.12));
+    animation:cheerPop 1.5s cubic-bezier(.34,1.56,.64,1) forwards;
+  `;
+  document.body.appendChild(el);
+  setTimeout(()=>el.remove(),1600);
+}
+
+function playCheerSound(){
+  const ctx=getAC();if(!ctx)return;
+  // 귀여운 팡파르 (도미솔도)
+  [[523,0],[659,90],[784,180],[1047,270]].forEach(([f,t])=>{
+    setTimeout(()=>{
+      const o=ctx.createOscillator(),g=ctx.createGain();
+      o.connect(g);g.connect(ctx.destination);
+      o.type='sine';o.frequency.setValueAtTime(f,ctx.currentTime);
+      g.gain.setValueAtTime(0,ctx.currentTime);
+      g.gain.linearRampToValueAtTime(.32,ctx.currentTime+.015);
+      g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+.2);
+      o.start();o.stop(ctx.currentTime+.2);
+    },t);
+  });
+}
+function sndFw(){const ctx=getAC();if(!ctx)return;const o=ctx.createOscillator(),g=ctx.createGain();o.connect(g);g.connect(ctx.destination);o.type='sawtooth';o.frequency.setValueAtTime(180,ctx.currentTime);o.frequency.exponentialRampToValueAtTime(750,ctx.currentTime+.17);g.gain.setValueAtTime(.26,ctx.currentTime);g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+.17);o.start();o.stop(ctx.currentTime+.17);setTimeout(()=>{const c2=getAC();if(!c2)return;const buf=c2.createBuffer(1,c2.sampleRate*.26,c2.sampleRate);const d=buf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/d.length,1.4);const s=c2.createBufferSource(),g2=c2.createGain();s.buffer=buf;g2.gain.setValueAtTime(.52,c2.currentTime);g2.gain.exponentialRampToValueAtTime(.001,c2.currentTime+.26);s.connect(g2);g2.connect(c2.destination);s.start();},195);}
+function sndLv(){[392,494,587,698,784].forEach((f,i)=>setTimeout(()=>tone(f,'triangle',.21,.38),i*70));}
+function sndHeart(){tone(880,'sine',.09,.35);setTimeout(()=>tone(1047,'sine',.18,.35),78);}
+
+// ══════════════════════════════════════
+//  HANGUL
+// ══════════════════════════════════════
+const CH=['ㄱ','ㄲ','ㄴ','ㄷ','ㄸ','ㄹ','ㅁ','ㅂ','ㅃ','ㅅ','ㅆ','ㅇ','ㅈ','ㅉ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
+const JU=['ㅏ','ㅐ','ㅑ','ㅒ','ㅓ','ㅔ','ㅕ','ㅖ','ㅗ','ㅘ','ㅙ','ㅚ','ㅛ','ㅜ','ㅝ','ㅞ','ㅟ','ㅠ','ㅡ','ㅢ','ㅣ'];
+const JO=['','ㄱ','ㄲ','ㄳ','ㄴ','ㄵ','ㄶ','ㄷ','ㄹ','ㄺ','ㄻ','ㄼ','ㄽ','ㄾ','ㄿ','ㅀ','ㅁ','ㅂ','ㅄ','ㅅ','ㅆ','ㅇ','ㅈ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
+function dChar(c){const code=c.charCodeAt(0)-0xAC00;if(code<0||code>11171)return[c];const j=code%28,u=((code-j)/28)%21,h=Math.floor((code-j)/28/21);const r=[CH[h],JU[u]];if(j>0)r.push(JO[j]);return r;}
+function dWord(w){const r=[];for(const c of w)r.push(...dChar(c));return r;}
+function jStart(w,ci){let n=0;for(let i=0;i<ci;i++)n+=dChar(w[i]).length;return n;}
+
+// ══════════════════════════════════════
+//  SCORE / LEVEL
+// ══════════════════════════════════════
+function catKey(c){return'hb_'+c;}
+function catBest(c){return parseInt(localStorage.getItem(catKey(c))||'0');}
+function grpBest(cats){return cats.length?Math.min(...cats.map(catBest)):0;}
+function saveSc(cats,sc){cats.forEach(c=>{if(sc>catBest(c))localStorage.setItem(catKey(c),String(sc));});}
+function maxUnl(cats){const b=grpBest(cats);let lv=1;for(let i=1;i<=5;i++)if(b>=UNL[i])lv=i;return lv;}
+function calcLv(wo){if(wo<2)return 1;if(wo<5)return 2;if(wo<8)return 3;if(wo<11)return 4;return 5;}
+
+// ══════════════════════════════════════
+//  SPEED
+// ══════════════════════════════════════
+const DIFF={
+  // speedMs: 풍선 낙하 시간 (ms)
+  // rowSize: 한 줄에 내려오는 풍선 수
+  // maxRows: 최대 기회 줄 수 (쉬움:2 / 보통:3 / 어려움:4)
+  // correctPerRow: 줄당 정답 자모 개수
+  easy:  {speedMs:20000,rowSize:8, maxRows:2,correctPerRow:2},
+  normal:{speedMs:15000,rowSize:10,maxRows:3,correctPerRow:2},
+  hard:  {speedMs:10000,rowSize:12,maxRows:4,correctPerRow:2},
+};
+const SM=[1,1,.88,.70,.52,.35];
+const PM=[1,1,.90,.72,.55,.38];
+function lvSpd(){return Math.round(G.diff.speedMs*SM[Math.min(G.lv,5)]);}
+function lvSpawn(){return Math.round(G.diff.spawnMs*PM[Math.min(G.lv,5)]);}
+
+// ══════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════
+let selCats=['동물'],selDiff='easy',chosenLv=1;
+let G={};
+let bEls=[],paused=false,spawnTmr=null;
+let hintTmr=null,hintEl=null,hintJamo=null,hintActTmr=null;
+// 틀린 단어 재도전 모드
+let retryWords=null; // null이면 일반 모드, 배열이면 재도전 단어 목록
+let isRetryMode=false; // 재도전 모드 여부
+const RETRY_SUCCESS_MSG=[
+  '🎉 완벽해요! 이번엔 다 맞췄어요!',
+  '👏 대단해요! 다 맞췄어요!',
+  '🌟 훌륭해요! 연습 효과가 나왔어요!',
+  '🏆 완벽 클리어! 이제 다 외웠죠?',
+  '🎊 멋져요! 다시 도전해서 성공했어요!',
+];
+
+// ══════════════════════════════════════
+//  STARS
+// ══════════════════════════════════════
+(()=>{const L=document.getElementById('starLayer');for(let i=0;i<26;i++){const s=document.createElement('div');s.className='star';const sz=1.5+Math.random()*3.5;s.style.cssText=`width:${sz}px;height:${sz}px;top:${Math.random()*65}%;left:${Math.random()*100}%;--d:${2+Math.random()*4}s;--dl:${Math.random()*5}s;`;L.appendChild(s);}})();
+
+// ══════════════════════════════════════
+//  START SCREEN
+// ══════════════════════════════════════
+function renderLvBtns(){
+  const row=document.getElementById('lvRow');if(!row)return;
+  row.innerHTML='';
+  const best=grpBest(selCats),mu=maxUnl(selCats);
+  if(chosenLv>mu)chosenLv=1;
+  const badge=document.getElementById('bestBadge');
+  if(best>0){badge.style.display='inline-flex';document.getElementById('bestVal').textContent=best.toLocaleString();}
+  else badge.style.display='none';
+  for(let lv=1;lv<=5;lv++){
+    const btn=document.createElement('button');btn.className='lv-btn';
+    const unl=lv<=mu,req=UNL[lv];
+    if(!unl){
+      btn.classList.add('locked');
+      btn.innerHTML=`<span class="lv-num">Lv.${lv}</span><span class="lv-stars">${LSTARS[lv]}</span><span class="lv-req">${req.toLocaleString()}점~</span>`;
+      btn.addEventListener('click',()=>{
+        const need=Math.max(0,req-best);
+        const t=document.getElementById('lockToast');
+        t.innerHTML=`🔒 [${selCats.join(', ')}] 레벨 ${lv} 잠금<br><span style="font-size:.85rem;opacity:.88;">${req.toLocaleString()}점 필요 · 현재 ${best.toLocaleString()}점<br><b style="color:#ffd93d;">${need.toLocaleString()}점</b> 더 모으세요!</span>`;
+        t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3200);
+      });
+    } else {
+      btn.classList.add('unlocked');if(lv===chosenLv)btn.classList.add('selected');
+      btn.innerHTML=`<span class="lv-num">Lv.${lv}</span><span class="lv-stars">${LSTARS[lv]}</span><span class="lv-req">${lv===1?'기본':req.toLocaleString()+'점~'}</span>`;
+      btn.addEventListener('click',()=>{chosenLv=lv;document.querySelectorAll('.lv-btn.selected').forEach(b=>b.classList.remove('selected'));btn.classList.add('selected');});
+    }
+    row.appendChild(btn);
+  }
+  const cr=document.getElementById('catRec');if(cr){cr.innerHTML='';
+    Object.keys(CATS).forEach(cat=>{const b=catBest(cat);if(!b)return;const ml=maxUnl([cat]);
+      const sp=document.createElement('div');
+      sp.style.cssText='display:inline-flex;align-items:center;gap:3px;background:rgba(255,255,255,.75);border-radius:7px;padding:2px 7px;font-size:.66rem;font-weight:700;color:#3a5a8a;box-shadow:0 2px 0 rgba(155,200,235,.38);border:1px solid rgba(180,210,240,.48);';
+      sp.innerHTML=`${CATS[cat].icon} ${cat} <span style="color:#e8a000;">${LSTARS[ml]||'·'}</span> <span style="color:#5a8a5a;">${b.toLocaleString()}점</span>`;
+      cr.appendChild(sp);});}
+}
+
+const catGrid=document.getElementById('catGrid');
+Object.entries(CATS).forEach(([name,data])=>{
+  const btn=document.createElement('button');btn.className='cat-btn'+(name==='동물'?' active':'');
+  btn.innerHTML=`<span class="cat-icon">${data.icon}</span><span class="cat-name">${name}</span>`;
+  btn.addEventListener('click',()=>{
+    getAC();
+    if(selCats.includes(name)){if(selCats.length===1)return;selCats=selCats.filter(c=>c!==name);btn.classList.remove('active');}
+    else{selCats.push(name);btn.classList.add('active');btn.style.animation='none';btn.offsetWidth;btn.style.animation='';}
+    renderLvBtns();
+  });
+  catGrid.appendChild(btn);
+});
+document.querySelectorAll('.diff-btn').forEach(b=>{b.addEventListener('click',()=>{getAC();document.querySelectorAll('.diff-btn').forEach(x=>x.classList.remove('active'));b.classList.add('active');selDiff=b.dataset.diff;});});
+document.getElementById('startBtn').addEventListener('click',()=>{getAC();retryWords=null;startGame();});
+document.getElementById('pauseBtn').addEventListener('click',togglePause);
+document.getElementById('resumeBtn').addEventListener('click',togglePause);
+document.getElementById('menuBtnGame').addEventListener('click',goMenu);
+document.getElementById('menuBtnOv').addEventListener('click',goMenu);
+document.getElementById('quitBtn').addEventListener('click',()=>{G.over=true;clearAll();showResult();});
+document.getElementById('menuBtn').addEventListener('click',()=>{retryWords=null;isRetryMode=false;showScreen('start');});
+renderLvBtns();
+
+// ══════════════════════════════════════
+//  SCREENS
+// ══════════════════════════════════════
+function showScreen(name){
+  ['startScreen','gameScreen','resultScreen'].forEach(id=>document.getElementById(id).classList.add('hidden'));
+  document.getElementById(name+'Screen').classList.remove('hidden');
+  document.getElementById('pauseOverlay').classList.add('hidden');
+  if(name!=='game')clearAll();
+}
+function goMenu(){G.over=true;retryWords=null;isRetryMode=false;clearAll();showScreen('start');}
+
+// ══════════════════════════════════════
+//  GAME START
+// ══════════════════════════════════════
+function startGame(){
+  let words;
+  if(retryWords&&retryWords.length>0){
+    words=shuffle([...retryWords]);
+    isRetryMode=true;
+  } else {
+    words=shuffle([...selCats.flatMap(c=>CATS[c].words)]);
+    isRetryMode=false;
+  }
+  const diff=DIFF[selDiff];
+  const startLv=Math.max(1,Math.min(5,chosenLv));
+  G={
+    words,wIdx:0,
+    score:Math.floor(UNL[startLv]*.5),
+    lives:3,wordsOk:LV_BASE[startLv]||0,
+    consWords:0,consWrong:0,
+    totalCorrect:0,totalWrong:0,
+    wrongWords:{},
+    rowsDone:0,    // 현재 자모의 줄 수 (내부용)
+    wordRows:0,    // 단어 전체 기준 줄 수 (최대 maxRows = 2)
+    rowActive:false,
+    lv:startLv,diff,
+    jamo:[],filled:[],entry:null,over:false,activeB:0
+  };
+  paused=false;hintJamo=null;
+  document.body.classList.remove('level5');
+  showScreen('game');
+  renderLives();renderScore();renderSpeed();renderWrongDots();
+  nextWord();
+}
+
+function nextWord(){
+  // 재도전 모드: 단어 소진 시 반복하지 않음 (checkWord에서 종료 처리)
+  if(G.wIdx>=G.words.length){
+    if(isRetryMode){ G.over=true; showResult(); return; }
+    G.words=shuffle([...G.words]); G.wIdx=0;
+  }
+  G.entry=G.words[G.wIdx++];
+  G.jamo=dWord(G.entry.word);
+  G.filled=new Array(G.jamo.length).fill(null);
+  G.consWrong=0;
+  G.rowsDone=0;
+  G.wordRows=0;
+  G.rowActive=false;
+  clearBalloons();
+  document.getElementById('targetImage').textContent=G.entry.emoji;
+  const lbl=document.getElementById('wordLabel');if(lbl)lbl.textContent='';
+  renderWord();renderDots();renderWrongDots();renderProgressBar();scheduleBalloons();
+}
+
+function clearBalloons(){if(spawnTmr){clearTimeout(spawnTmr);spawnTmr=null;}bEls.forEach(b=>b.remove());bEls=[];G.activeB=0;}
+function clearHint(){
+  if(hintTmr){clearTimeout(hintTmr);hintTmr=null;}
+  if(hintEl){hintEl.remove();hintEl=null;}
+  if(hintActTmr){clearTimeout(hintActTmr);hintActTmr=null;}
+  hintJamo=null;
+  document.querySelectorAll('.balloon-body.hint-active').forEach(b=>b.classList.remove('hint-active'));
+  document.querySelectorAll('.dot.hint-pulse').forEach(d=>d.classList.remove('hint-pulse'));
+  document.getElementById('hintOverlay').style.display='none';
+}
+function clearAll(){
+  clearBalloons();clearHint();paused=false;
+  document.body.classList.remove('level5');
+  document.getElementById('pauseOverlay').classList.add('hidden');
+  const ov=document.getElementById('failOverlay');
+  if(ov)ov.classList.remove('show');
+  const fb=document.getElementById('failBanner');
+  if(fb)fb.classList.remove('show');
+}
+
+// ══════════════════════════════════════
+//  RENDER
+// ══════════════════════════════════════
+function renderProgressBar(){
+  const bar=document.getElementById('progressBarInner');
+  if(!bar||!G.jamo)return;
+  bar.innerHTML='';
+  const ni=G.filled.indexOf(null); // 현재 눌러야 할 인덱스
+  G.jamo.forEach((jamo,i)=>{
+    const div=document.createElement('div');
+    div.className='pb-jamo';
+    if(G.filled[i]!==null){
+      // 완료
+      div.classList.add('done');
+      div.textContent=G.filled[i];
+    } else if(i===ni){
+      // 지금 눌러야 할 것
+      div.classList.add('current');
+      div.textContent=jamo;
+    } else {
+      // 아직 차례 아님
+      div.textContent='?';
+    }
+    bar.appendChild(div);
+  });
+}
+
+function renderWord(){
+  const tw=document.getElementById('targetWord');tw.innerHTML='';
+  // 그림 아래 단어명 힌트 라벨 (글자가 완성된 만큼만 보여줌)
+  const lbl=document.getElementById('wordLabel');
+  if(lbl){
+    const done=[...G.entry.word].filter((_,ci)=>{
+      const si=jStart(G.entry.word,ci);
+      const d=dChar(G.entry.word[ci]);
+      return G.filled.slice(si,si+d.length).every(f=>f!==null);
+    });
+    lbl.textContent=done.length>0?done.join('')+'...':'';
+  }
+  renderProgressBar();
+  [...G.entry.word].forEach((ch,ci)=>{
+    const sl=document.createElement('div');sl.className='char-slot';sl.id='sl'+ci;
+    const d=dChar(ch),si=jStart(G.entry.word,ci);
+    const fl=G.filled.slice(si,si+d.length);
+    if(fl.every(f=>f!==null)){sl.classList.add('complete');sl.textContent=ch;}
+    else if(fl.some(f=>f!==null)){sl.classList.add('filled');sl.textContent='';}
+    else sl.textContent=''; // 맞추기 전엔 빈칸
+    tw.appendChild(sl);
+  });
+}
+function renderDots(){
+  const pd=document.getElementById('progressDots');pd.innerHTML='';
+  G.jamo.forEach((_,i)=>{const d=document.createElement('div');d.className='dot'+(G.filled[i]!==null?' done':'');d.id='dt'+i;pd.appendChild(d);});
+}
+function renderLives(){const b=document.getElementById('livesBox');b.innerHTML='';for(let i=0;i<Math.max(G.lives,0);i++){const h=document.createElement('span');h.className='heart';h.id='hrt'+i;h.textContent='❤️';b.appendChild(h);}}
+function renderScore(){document.getElementById('scoreVal').textContent=G.score;}
+function renderSpeed(){const s=['','','⭐','⭐⭐','⭐⭐⭐','🔥'];document.getElementById('spdBox').textContent='Lv.'+G.lv+' '+(s[Math.min(G.lv,5)]||'');}
+function renderWrongDots(){
+  const wc=document.getElementById('wrongCounter');wc.innerHTML='';
+  const limit=WRONG_LIMIT[Math.min(G.lv,5)];
+  for(let i=0;i<limit;i++){const d=document.createElement('div');d.className='wrong-dot'+(i<G.consWrong?' on':'');wc.appendChild(d);}
+}
+function setDot(i,on){const d=document.getElementById('dt'+i);if(d){on?d.classList.add('done'):d.classList.remove('done');}}
+
+// ══════════════════════════════════════
+//  BALLOON SPAWN
+// ══════════════════════════════════════
+function wJamoSet(){return[...new Set(G.jamo)];}
+
+// ★ 세트 시스템:
+// 한 세트 = 정답자모 2~3개 + 오답들을 한꺼번에 가로로 나란히 내려보냄
+// 바닥 닿으면 하트 감소
+// maxSets번 세트 후에도 못 맞추면 실패
+
+function scheduleBalloons(){
+  if(spawnTmr){clearTimeout(spawnTmr);spawnTmr=null;}
+  // 잠깐 후 첫 줄 발사
+  spawnTmr=setTimeout(()=>launchRow(),400);
+}
+
+// ★ 줄(row) 발사 — 단어 전체 기준 2번 기회
+// 1줄: 모든 남은 자모 + 오답 섞어서 내려옴
+// 1줄에서 맞출 수 있는 자모 다 맞추기
+// 못 맞춘 자모 있으면 → 2번째 줄 (못 맞춘 자모 더 많이)
+// 2줄 모두 소진 → 하트 감소
+function launchRow(){
+  if(G.over||paused)return;
+
+  const ni=G.filled.indexOf(null);
+  if(ni===-1)return; // 단어 완성됨
+
+  // 단어 전체 기준 줄 수 체크
+  if(G.wordRows>=G.diff.maxRows){
+    G.wordRows=0;
+    G.rowsDone=0;
+    loseLife();
+    return;
+  }
+
+  G.wordRows++;
+  G.rowsDone=G.wordRows;
+  G.rowActive=true;
+
+  const isSecondRow=(G.wordRows===2);
+
+  // 아직 못 맞춘 자모들
+  const missingJamos=G.jamo.filter((_,i)=>G.filled[i]===null);
+  const uniqueMissing=[...new Set(missingJamos)];
+
+  const rsz=G.diff.rowSize;
+
+  // 오답 pool
+  const rPool=['ㄱ','ㄴ','ㄷ','ㄹ','ㅁ','ㅂ','ㅅ','ㅇ','ㅈ','ㅊ','ㅏ','ㅑ','ㅓ','ㅕ','ㅗ','ㅛ','ㅜ','ㅠ','ㅡ','ㅣ']
+    .filter(j=>!uniqueMissing.includes(j));
+  const wrongPool=shuffle([...rPool]);
+
+  let row=[];
+  if(isSecondRow){
+    // 2번째 줄: 못 맞춘 자모를 각각 3개씩 + 오답
+    uniqueMissing.forEach(j=>{
+      for(let k=0;k<3;k++) row.push(j);
+    });
+    // 나머지 빈 자리 오답으로
+    while(row.length<rsz) row.push(wrongPool[row.length%wrongPool.length]);
+  } else {
+    // 1번째 줄: 못 맞춘 자모 각각 2개씩 + 오답
+    uniqueMissing.forEach(j=>{
+      for(let k=0;k<2;k++) row.push(j);
+    });
+    while(row.length<rsz) row.push(wrongPool[row.length%wrongPool.length]);
+  }
+  // 최대 크기 제한 후 섞기
+  row=shuffle(row.slice(0,rsz));
+
+  // 풍선 발사 (0.08초 간격)
+  row.forEach((jamo,idx)=>{
+    setTimeout(()=>{
+      if(G.over||paused)return;
+      spawnOne(jamo);
+    },idx*80);
+  });
+
+  // 줄 다 내려간 후
+  const rowDur=lvSpd()+row.length*80+400;
+  spawnTmr=setTimeout(()=>{
+    if(G.over||paused)return;
+    G.rowActive=false;
+
+    const ni2=G.filled.indexOf(null);
+    if(ni2===-1)return; // 완성됨
+
+    // 못 맞춘 자모 있으면 다음 줄
+    setTimeout(()=>{if(!G.over&&!paused)launchRow();},200);
+  },rowDur);
+}
+
+function spawnOne(jamo){
+  const el=document.createElement('div');el.className='balloon';
+  const st=BST[Math.floor(Math.random()*BST.length)];
+  const tilt=(Math.random()-.5)*8; // 살짝만 기울임
+  el.style.setProperty('--tilt',tilt+'deg');
+  el.style.setProperty('--dx','0px'); // 가로 이동 없음 (나란히 유지)
+  const ga=document.getElementById('gameArea'),aW=ga.offsetWidth;
+  const bW=Math.min(90,Math.max(62,aW*.13));
+  // 랜덤 위치 — 겹쳐도 됨 (드래그로 밀 수 있음)
+  el.style.left=(14+Math.random()*(aW-bW-28))+'px';
+  el.style.top='0px';
+  el.style.animation=`balloonFall ${lvSpd()}ms linear forwards`;
+  el.style.animationPlayState='running';
+  el.innerHTML=`<div class="balloon-body" style="width:${bW}px;height:${bW*1.22}px;background:${st.bg};box-shadow:inset -5px -9px 16px rgba(0,0,0,.17),inset 3px 4px 8px rgba(255,255,255,.24),0 9px 24px ${st.sh},0 4px 0 ${st.kn},0 3px 7px rgba(0,0,0,.1);">${jamo}</div><div class="balloon-knot" style="background:${st.kn};width:11px;height:14px;"></div><div class="balloon-string"></div>`;
+  el.dataset.jamo=jamo;
+  addDragSupport(el);
+  el.addEventListener('click',()=>onBClick(el));
+  ga.appendChild(el);bEls.push(el);G.activeB++;
+  if(hintJamo&&jamo===hintJamo){
+    const body=el.querySelector('.balloon-body');
+    if(body)body.classList.add('hint-active');
+  }
+  // ★ 바닥 도달 → 정답 자모면 💨 표시 (하트 감소는 세트 단위로 처리)
+  el.addEventListener('animationend',()=>{
+    if(!el.classList.contains('popping')&&!el.classList.contains('wrongpop')){
+      const ni=G.filled.indexOf(null);
+      if(ni!==-1&&G.jamo[ni]===jamo){
+        showFT('💨',parseFloat(el.style.left)+bW/2,
+          document.getElementById('gameArea').offsetHeight-60,'#ff8c42');
+      }
+    }
+    el.remove();bEls=bEls.filter(b=>b!==el);
+    G.activeB=Math.max(0,G.activeB-1);
+  },{once:true});
+}
+
+// ── 드래그(밀기): 풍선을 클릭&드래그로 가로 위치만 이동
+// 낙하 애니메이션은 유지하면서 translateX만 추가로 조정
+function addDragSupport(el){
+  let startX=0,dragging=false,dragOffsetX=0,isDragAction=false;
+
+  const onStart=(e)=>{
+    if(paused||G.over)return;
+    const pt=e.touches?e.touches[0]:e;
+    startX=pt.clientX;
+    dragging=true;
+    isDragAction=false;
+    dragOffsetX=0;
+  };
+
+  const onMove=(e)=>{
+    if(!dragging||paused||G.over)return;
+    const pt=e.touches?e.touches[0]:e;
+    const dx=pt.clientX-startX;
+    if(Math.abs(dx)>6){
+      isDragAction=true;
+      dragOffsetX+=dx;
+      startX=pt.clientX;
+      // left 위치를 직접 조정 (낙하 애니메이션의 translateX와 별개)
+      const ga=document.getElementById('gameArea');
+      const aW=ga.offsetWidth;
+      const bW=parseFloat(el.querySelector('.balloon-body').style.width)||70;
+      let newLeft=(parseFloat(el.style.left)||0)+dx;
+      // 화면 밖으로 나가지 않도록
+      newLeft=Math.max(0,Math.min(aW-bW,newLeft));
+      el.style.left=newLeft+'px';
+      if(e.cancelable)e.preventDefault();
+    }
+  };
+
+  const onEnd=(e)=>{
+    if(isDragAction){
+      // 드래그였으면 클릭 이벤트 차단
+      e.stopPropagation();
+    }
+    dragging=false;isDragAction=false;
+  };
+
+  el.addEventListener('mousedown',onStart,{passive:true});
+  document.addEventListener('mousemove',onMove,{passive:false});
+  document.addEventListener('mouseup',onEnd,{once:false});
+  el.addEventListener('touchstart',onStart,{passive:true});
+  el.addEventListener('touchmove',onMove,{passive:false});
+  el.addEventListener('touchend',onEnd,{passive:true});
+}
+
+// ══════════════════════════════════════
+//  PAUSE
+// ══════════════════════════════════════
+function togglePause(){
+  // 실패 오버레이 표시 중엔 일시정지 무시
+  if(document.getElementById('failOverlay').classList.contains('show'))return;
+  paused=!paused;
+  document.getElementById('pauseOverlay').classList.toggle('hidden',!paused);
+  document.getElementById('pauseBtn').textContent=paused?'▶ 재생':'⏸ 정지';
+  bEls.forEach(b=>b.style.animationPlayState=paused?'paused':'running');
+  if(hintEl)hintEl.style.animationPlayState=paused?'paused':'running';
+  if(!paused){
+    // 재개 시 다음 세트 예약
+    if(spawnTmr){clearTimeout(spawnTmr);spawnTmr=null;}
+    if(G.rowActive||G.rowsDone<G.diff.maxRows){
+      setTimeout(()=>{if(!paused&&!G.over)launchRow();},1000);
+    }
+  } else {
+    if(spawnTmr){clearTimeout(spawnTmr);spawnTmr=null;}
+  }
+}
+
+// ══════════════════════════════════════
+//  BALLOON CLICK
+// ══════════════════════════════════════
+function onBClick(el){
+  if(paused||G.over)return;
+  if(!bEls.includes(el))return; // 중복 방지
+  const cj=el.dataset.jamo;
+  const ni=G.filled.indexOf(null);
+  const nj=ni!==-1?G.jamo[ni]:null;
+  const correct=(nj!==null&&cj===nj);
+  const rect=el.getBoundingClientRect(),gr=document.getElementById('gameArea').getBoundingClientRect();
+  const cx=rect.left-gr.left+rect.width/2,cy=rect.top-gr.top+rect.height/2;
+  bEls=bEls.filter(b=>b!==el);G.activeB=Math.max(0,G.activeB-1);
+  if(correct){
+    el.style.animationPlayState='running';el.classList.add('popping');
+    popP(cx,cy,true);sndOk();
+    // 칭찬 음성!
+    setTimeout(()=>speakCheer(),150);
+    G.filled[ni]=cj;G.totalCorrect++;G.score+=10;
+    showFT('+10',cx,cy,'#58c96a');setDot(ni,true);renderWord();renderScore();
+    el.addEventListener('animationend',()=>el.remove(),{once:true});
+    // ★ 정답 맞춰도 줄은 계속 내려옴 — 같은 줄에서 다른 자모도 맞출 수 있음
+    // 줄이 다 내려간 후 launchRow가 다음 자모 줄 처리
+    checkCharComplete(ni);
+    checkWord();checkLv();
+  } else {
+    el.style.animationPlayState='running';el.classList.add('wrongpop');
+    popP(cx,cy,false);sndBad();
+    G.totalWrong++;G.consWrong++;
+    showFT('✕',cx,cy,'#ff5e5e');
+    renderWrongDots();
+    const limit=WRONG_LIMIT[Math.min(G.lv,5)];
+    if(G.consWrong>=limit){G.consWrong=0;loseLife();}
+    el.addEventListener('animationend',()=>el.remove(),{once:true});
+  }
+}
+
+// ══════════════════════════════════════
+//  CHAR COMPLETE POPUP (음절 단위)
+// ══════════════════════════════════════
+function checkCharComplete(filledJamoIdx){
+  // 방금 채운 자모가 어떤 글자(음절)를 완성했는지 확인
+  const word=G.entry.word;
+  let pos=0;
+  for(let ci=0;ci<word.length;ci++){
+    const d=dChar(word[ci]);
+    const sliceEnd=pos+d.length;
+    // 이 음절의 모든 자모가 채워졌는지
+    if(filledJamoIdx>=pos&&filledJamoIdx<sliceEnd){
+      const filled=G.filled.slice(pos,sliceEnd);
+      if(filled.every(f=>f!==null)&&!G.filled.slice(0,pos+d.length).includes(null)||G.filled.slice(pos,sliceEnd).every(f=>f!==null)){
+        // 이 음절 완성! — 단어 전체가 완성된 경우는 checkWord가 처리하므로
+        // 단어 전체 완성이 아닐 때만 팝업 (중간 글자 완성)
+        const allDone=G.filled.every(f=>f!==null);
+        if(!allDone){
+          showCharPopup(word[ci], G.entry.emoji);
+        }
+      }
+      break;
+    }
+    pos=sliceEnd;
+  }
+}
+
+function showCharPopup(char, emoji){
+  const popup=document.getElementById('charCompletePopup');
+  popup.innerHTML=`<div style="font-size:clamp(2.2rem,7vw,3.2rem);line-height:1;">${emoji} <span style="font-size:clamp(2.5rem,8vw,3.8rem);letter-spacing:3px;">${char}</span></div><div style="font-size:clamp(.85rem,2.5vw,1.05rem);margin-top:4px;opacity:.88;">완성! 계속 해봐요 👍</div>`;
+  popup.classList.remove('show');void popup.offsetWidth;popup.classList.add('show');
+}
+
+// ══════════════════════════════════════
+//  WORD COMPLETE
+// ══════════════════════════════════════
+function checkWord(){
+  if(!G.filled.every(f=>f!==null))return;
+  G.wordsOk++;G.consWords++;G.score+=50;renderScore();
+  if(G.consWords%3===0){
+    G.lives=Math.min(G.lives+1,7);renderLives();
+    const hs=document.querySelectorAll('.heart'),last=hs[hs.length-1];
+    if(last){last.classList.remove('pulse');void last.offsetWidth;last.classList.add('pulse');}
+    sndHeart();showFT('❤️ +1',document.getElementById('gameArea').offsetWidth/2,78,'#ff5e5e');
+  }
+  sndWord();launchFW(3);clearBalloons();clearHint();
+  if(spawnTmr){clearTimeout(spawnTmr);spawnTmr=null;}
+  G.rowsDone=0;G.wordRows=0;G.rowActive=false;
+
+  // ★ 재도전 모드: 모든 단어 완성 → 즉시 성공 종료
+  if(isRetryMode && G.wIdx>=G.words.length){
+    G.over=true;
+    setTimeout(()=>showResult(),2000);
+    return;
+  }
+  setTimeout(()=>{if(!G.over)nextWord();},2000);
+}
+
+// ══════════════════════════════════════
+//  LEVEL UP
+// ══════════════════════════════════════
+function checkLv(){
+  const nl=Math.max(calcLv(G.wordsOk),G.lv);
+  if(nl<=G.lv)return;
+  G.lv=nl;renderSpeed();sndLv();
+  if(G.lv>=5)document.body.classList.add('level5');
+  else document.body.classList.remove('level5');
+  if(spawnTmr){clearInterval(spawnTmr);spawnTmr=null;}
+  spawnTmr=setInterval(()=>{if(paused||G.over)return;if(G.activeB<G.diff.maxB)buildQ();},lvSpawn());
+  // 레벨업 폭죽!
+  launchFW(3);
+  const bn=document.getElementById('levelBanner');
+  bn.textContent='🎉 레벨 '+G.lv+(G.lv>=5?' 🔥 MAX':'')+'!';
+  bn.classList.remove('show');void bn.offsetWidth;bn.classList.add('show');
+  scheduleHint();
+}
+
+// ══════════════════════════════════════
+//  LOSE LIFE
+// ══════════════════════════════════════
+function loseLife(){
+  G.lives--;renderLives();
+  const word=G.entry.word;
+  G.wrongWords[word]=(G.wrongWords[word]||0)+1;
+  sndFail();
+
+  // 풍선 멈추고 오버레이 표시
+  clearBalloons();clearHint();
+  G.consWrong=0;
+
+  if(G.lives<=0){
+    // 목숨 다 소진
+    G.over=true;
+    showFailBanner(true, ()=>{ showResult(); });
+  } else {
+    // 목숨 남음: 배너+오버레이 표시, 클릭하면 다음 단어
+    showFailBanner(false, ()=>{
+      if(!G.over) nextWord();
+    });
+  }
+}
+
+function showFailBanner(isGameOver, onDismiss){
+  // 오버레이로 풍선 클릭 차단
+  const ov=document.getElementById('failOverlay');
+  ov.classList.add('show');
+
+  const fb=document.getElementById('failBanner');
+  const msg=isGameOver
+    ? '😢 게임 오버!<br><span class="tap-hint">화면을 탭해서 결과 보기</span>'
+    : FAIL_MSG[Math.floor(Math.random()*FAIL_MSG.length)]+'<br><span class="tap-hint">화면을 탭해서 계속하기 ▶</span>';
+  fb.innerHTML=msg;
+  fb.classList.remove('show');void fb.offsetWidth;fb.classList.add('show');
+
+  // 클릭 한 번으로 배너 닫고 계속
+  function dismiss(){
+    ov.classList.remove('show');
+    fb.classList.remove('show');
+    ov.removeEventListener('click',dismiss);
+    fb.removeEventListener('click',dismiss);
+    if(isGameOver){
+      setTimeout(onDismiss, 200);
+    } else {
+      onDismiss();
+    }
+  }
+  ov.addEventListener('click', dismiss);
+  fb.addEventListener('click', dismiss);
+
+  // 클릭 안 해도 자동으로 (게임오버: 5초, 일반: 3.5초 — 읽을 시간 충분히)
+  setTimeout(()=>{
+    if(ov.classList.contains('show')){
+      dismiss();
+    }
+  }, isGameOver ? 5000 : 3500);
+}
+
+// ══════════════════════════════════════
+//  UI HELPERS
+// ══════════════════════════════════════
+function showFT(txt,x,y,col){const el=document.createElement('div');el.className='float-text';el.textContent=txt;el.style.left=x+'px';el.style.top=y+'px';el.style.color=col;document.getElementById('gameArea').appendChild(el);el.addEventListener('animationend',()=>el.remove(),{once:true});}
+function popP(cx,cy,ok){
+  const ga=document.getElementById('gameArea');
+  const cols=ok?['#58c96a','#ffd93d','#3ecfbf','#85e895','#ffee90']:['#ff5e5e','#ff8c42','#ffb0b0'];
+  for(let i=0;i<12;i++){const p=document.createElement('div');p.className='pop-p';const sz=5+Math.random()*8,ang=Math.random()*Math.PI*2,dist=42+Math.random()*66,dur=.42+Math.random()*.5;
+    p.style.cssText=`width:${sz}px;height:${sz}px;left:${cx}px;top:${cy}px;background:${cols[Math.floor(Math.random()*cols.length)]};--tx:${Math.cos(ang)*dist}px;--ty:${Math.sin(ang)*dist-24}px;--dur:${dur}s;box-shadow:0 2px 5px rgba(0,0,0,.12);`;
+    ga.appendChild(p);p.addEventListener('animationend',()=>p.remove(),{once:true});}
+}
+
+// ══════════════════════════════════════
+//  HINT SYSTEM (Lv4+)
+// ══════════════════════════════════════
+function scheduleHint(){
+  clearHint();if(G.lv<4||G.over)return;
+  const delay=(12+Math.random()*8)*1000;
+  hintTmr=setTimeout(()=>{if(!paused&&!G.over)spawnHint();},delay);
+}
+function spawnHint(){
+  if(G.over||paused)return;clearHint();
+  const ni=G.filled.indexOf(null);if(ni===-1)return;
+  const nj=G.jamo[ni],word=G.entry.word;
+  const ga=document.getElementById('gameArea'),aW=ga.offsetWidth;
+  const bW=Math.min(190,Math.max(135,aW*.265));
+  const xPos=aW/2-bW/2+(Math.random()-.5)*aW*.16;
+  const spd=Math.max(lvSpd()*1.7,18000);
+  const el=document.createElement('div');el.className='hint-balloon';
+  el.style.setProperty('--tilt',((Math.random()-.5)*4)+'deg');
+  el.style.setProperty('--spd',spd+'ms');
+  el.style.left=xPos+'px';el.style.bottom='0px';el.style.position='absolute';
+  el.innerHTML=`<div class="hint-body" style="width:${bW}px;height:${bW*1.2}px;"><div class="hint-tag" style="font-size:${bW*.09}px;">💡 힌트</div><div class="hint-word" style="font-size:${bW*.27}px;">${word}</div><div style="font-size:${bW*.088}px;color:#7a4000;font-family:'Gaegu',cursive;font-weight:700;background:rgba(255,255,255,.44);border-radius:7px;padding:2px 7px;margin-top:2px;">터치!</div></div><div class="hint-knot" style="width:${bW*.11}px;height:${bW*.13}px;"></div><div class="hint-string" style="height:${bW*.37}px;"></div>`;
+  el.addEventListener('click',()=>onHintClick(el,nj,word));
+  el.addEventListener('touchend',(e)=>{e.preventDefault();onHintClick(el,nj,word);},{passive:false});
+  ga.appendChild(el);hintEl=el;
+  document.getElementById('hintOverlay').style.display='block';
+  setTimeout(()=>document.getElementById('hintOverlay').style.display='none',3000);
+  el.addEventListener('animationend',()=>{if(hintEl===el)hintEl=null;el.remove();if(!G.over)scheduleHint();},{once:true});
+}
+function onHintClick(el,nj,word){
+  if(paused||G.over)return;
+  const rect=el.getBoundingClientRect(),gr=document.getElementById('gameArea').getBoundingClientRect();
+  const cx=rect.left-gr.left+rect.width/2,cy=rect.top-gr.top+rect.height/2;
+  if(hintEl===el)hintEl=null;el.remove();clearHint();
+  popP(cx,cy,true);sndHeart();showFT('💡 '+word,cx,cy-26,'#e8a000');
+  spawnMinis(cx,cy,word);activateHintPulse(nj);scheduleHint();
+}
+function spawnMinis(cx,cy,word){
+  const ga=document.getElementById('gameArea');
+  const MS=[{bg:'radial-gradient(circle at 34% 30%,#ffe066,#e0a800)',sh:'rgba(224,168,0,.52)'},{bg:'radial-gradient(circle at 34% 30%,#80e890,#24a036)',sh:'rgba(40,168,58,.42)'},{bg:'radial-gradient(circle at 34% 30%,#7ec8ff,#2482d8)',sh:'rgba(36,130,216,.42)'},{bg:'radial-gradient(circle at 34% 30%,#c8b2ff,#7048e0)',sh:'rgba(112,72,224,.42)'},{bg:'radial-gradient(circle at 34% 30%,#ff9090,#d82828)',sh:'rgba(216,40,40,.42)'}];
+  for(let i=0;i<5;i++){
+    const st=MS[i%5],mW=55,sx=(Math.random()-.5)*148,fy=-(238+Math.random()*138),rot=(Math.random()-.5)*26,dur=6+Math.random()*4,d1=(Math.random()-.5)*24,delay=i*.12;
+    const mini=document.createElement('div');mini.className='mini-balloon';
+    mini.style.cssText=`left:${cx-mW/2+(Math.random()-.5)*70}px;top:${cy-mW*.46}px;--sx:${sx}px;--fy:${fy}px;--rot:${rot}deg;--dur:${dur}s;--d1:${d1}px;animation-delay:${delay}s;`;
+    const fs=Math.max(8,mW*.26);
+    mini.innerHTML=`<div class="mini-body" style="width:${mW}px;height:${mW*1.18}px;background:${st.bg};box-shadow:inset -3px -5px 10px rgba(0,0,0,.17),inset 2px 2px 5px rgba(255,255,255,.32),0 5px 14px ${st.sh};"><span style="font-size:${fs*.65}px;font-family:'Gaegu',cursive;font-weight:700;color:rgba(255,255,255,.88);line-height:1;">힌트</span><span style="font-size:${fs}px;font-family:'Gaegu',cursive;font-weight:900;color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.32);line-height:1;">${word}</span></div><div class="mini-string"></div>`;
+    mini.addEventListener('click',(e)=>{e.stopPropagation();const b=mini.querySelector('.mini-body');if(b){b.style.transition='transform .1s';b.style.transform='rotate(17deg) scale(1.13)';setTimeout(()=>{b.style.transform='rotate(-9deg)';},88);setTimeout(()=>b.style.transform='',195);}tone(340,'sawtooth',.06,.12);setTimeout(()=>tone(290,'sawtooth',.07,.14),52);});
+    ga.appendChild(mini);
+    setTimeout(()=>{mini.style.transition='opacity 1.4s';mini.style.opacity='0';setTimeout(()=>mini.remove(),1400);},7500+i*520);
+  }
+}
+function activateHintPulse(jamo){
+  if(hintActTmr){clearTimeout(hintActTmr);hintActTmr=null;}
+  document.querySelectorAll('.balloon-body.hint-active').forEach(b=>b.classList.remove('hint-active'));
+  document.querySelectorAll('.dot.hint-pulse').forEach(d=>d.classList.remove('hint-pulse'));
+  hintJamo=jamo;
+  const ni=G.filled.indexOf(null);
+  if(ni!==-1){const dot=document.getElementById('dt'+ni);if(dot)dot.classList.add('hint-pulse');}
+  bEls.forEach(b=>{if(b.dataset.jamo===jamo){const body=b.querySelector('.balloon-body');if(body)body.classList.add('hint-active');}});
+  hintActTmr=setTimeout(()=>{document.querySelectorAll('.balloon-body.hint-active').forEach(b=>b.classList.remove('hint-active'));document.querySelectorAll('.dot.hint-pulse').forEach(d=>d.classList.remove('hint-pulse'));hintJamo=null;hintActTmr=null;},3500);
+}
+
+// ══════════════════════════════════════
+//  RESULT  ★ 틀린 단어 → 단어 칩 + 재도전
+// ══════════════════════════════════════
+function showResult(){
+  showScreen('result');
+  const prevMu=maxUnl(selCats);
+  saveSc(selCats,G.score);
+  const newMu=maxUnl(selCats);
+
+  document.getElementById('rScore').textContent=G.score.toLocaleString();
+  document.getElementById('rWords').textContent=G.wordsOk;
+  document.getElementById('rLevel').textContent=G.lv;
+
+  // 맞은 글자 / 틀린 횟수 표시
+  const ci=document.getElementById('rCorrectItem');
+  const cn=document.getElementById('rCorrect');
+  const cl=document.getElementById('rCorrectLbl');
+  if(G.totalWrong>0){
+    ci.classList.add('wrong-stat');
+    cn.textContent=G.totalWrong;cl.textContent='틀린 횟수';
+  } else {
+    ci.classList.remove('wrong-stat');
+    cn.textContent=G.totalCorrect;cl.textContent='맞은 글자';
+  }
+
+  // ★ 이모지/타이틀 — 재도전 성공 / 레벨별 / 점수별 단계 세분화
+  const allDone=Object.keys(G.wrongWords).length===0;
+  let emoji,title;
+
+  if(isRetryMode&&allDone){
+    // 재도전 성공!
+    emoji='🏆';
+    title=RETRY_SUCCESS_MSG[Math.floor(Math.random()*RETRY_SUCCESS_MSG.length)];
+    const rsb=document.getElementById('retrySuccessBanner');
+    rsb.innerHTML='🎊 재도전 성공!<br><span style="font-size:.7em;opacity:.88;">틀린 단어를 모두 맞췄어요!</span>';
+    rsb.classList.remove('show');void rsb.offsetWidth;rsb.classList.add('show');
+    launchFW(5);sndLv();
+  } else if(isRetryMode&&!allDone){
+    // 재도전 중 아직 틀린 단어 있음
+    emoji='💪';title='조금 더 연습해봐요!';
+  } else {
+    // 일반 플레이 — 레벨+단어수+오답으로 단계별 멘트
+    if(G.lv>=5&&allDone&&G.wordsOk>=11){
+      emoji='🏆';title='레벨5 완벽 클리어! 천재예요!';
+    } else if(G.lv>=5){
+      emoji='🥇';title='레벨5 도달! 정말 대단해요!';
+    } else if(G.lv>=4&&allDone){
+      emoji='🎖️';title='레벨4 완주! 훌륭해요!';
+    } else if(G.lv>=4){
+      emoji='🎉';title='레벨4까지 왔어요! 잘했어요!';
+    } else if(G.lv>=3&&G.wordsOk>=8&&allDone){
+      emoji='😎';title='실수 없이 레벨3 통과! 멋져요!';
+    } else if(G.lv>=3){
+      emoji='😊';title='레벨3까지 왔네요! 좋아요!';
+    } else if(G.wordsOk>=6&&allDone){
+      emoji='👍';title='단어를 많이 맞췄어요! 훌륭해요!';
+    } else if(G.wordsOk>=4){
+      emoji='😄';title='잘하고 있어요! 계속 도전해봐요!';
+    } else if(G.wordsOk>=2){
+      emoji='🌱';title='조금씩 늘고 있어요! 파이팅!';
+    } else if(G.wordsOk===1){
+      emoji='🐣';title='첫 단어 완성! 계속 해봐요!';
+    } else {
+      emoji='💪';title='괜찮아요! 다시 도전해봐요!';
+    }
+  }
+  document.getElementById('rEmoji').textContent=emoji;
+  document.getElementById('rTitle').textContent=title;
+
+  const cb=grpBest(selCats);
+  document.getElementById('rCatInfo').innerHTML=`${selCats.map(c=>CATS[c].icon+c).join(' ')}<br><span style="color:#e8a000;font-size:.75rem;">이 카테고리 최고: ${cb.toLocaleString()}점 ${LSTARS[newMu]}</span>`;
+
+  // ★ 틀린 단어 칩 표시
+  const wrongEntries=Object.entries(G.wrongWords);
+  const sec=document.getElementById('wrongWordsSec');
+  const grid=document.getElementById('wrongWordGrid');
+  grid.innerHTML='';
+
+  if(wrongEntries.length>0){
+    sec.style.display='block';
+    // 틀린 단어를 찾아서 emoji 포함해서 칩 생성
+    wrongEntries.sort((a,b)=>b[1]-a[1]).forEach(([word,cnt])=>{
+      const entry=G.words.find(w=>w.word===word)||{word,emoji:'❓'};
+      const chip=document.createElement('div');chip.className='wrong-word-chip';
+      chip.innerHTML=`<span class="chip-emoji">${entry.emoji}</span><span class="chip-word">${word}</span><span class="chip-cnt">${cnt}번</span>`;
+      chip.title=`${word} - 클릭해서 재도전`;
+      chip.addEventListener('click',()=>{
+        // 이 단어만으로 재도전
+        retryWords=[entry];
+        startGame();
+      });
+      grid.appendChild(chip);
+    });
+
+    // 전체 틀린 단어 재도전 버튼 추가
+    const retryAllWords=wrongEntries.map(([word])=>G.words.find(w=>w.word===word)||{word,emoji:'❓'});
+    const rb=document.getElementById('resBtns');
+    // 기존 재도전 버튼 앞에 전체 재도전 버튼 추가
+    let retryAllBtn=document.getElementById('retryAllBtn');
+    if(!retryAllBtn){
+      retryAllBtn=document.createElement('button');
+      retryAllBtn.id='retryAllBtn';
+      retryAllBtn.className='rbtn rbtn-retry';
+      rb.insertBefore(retryAllBtn,rb.firstChild);
+    }
+    retryAllBtn.textContent=`🔥 틀린 단어 ${wrongEntries.length}개 재도전`;
+    retryAllBtn.onclick=()=>{retryWords=retryAllWords;startGame();};
+    retryAllBtn.style.display='';
+  } else {
+    sec.style.display='none';
+    const retryAllBtn=document.getElementById('retryAllBtn');
+    if(retryAllBtn)retryAllBtn.style.display='none';
+  }
+
+  // replayBtn: 처음부터
+  document.getElementById('replayBtn').onclick=()=>{retryWords=null;showScreen('start');};
+
+  // 해금 알림
+  const notice=document.getElementById('unlockNotice');
+  if(newMu>prevMu){
+    notice.style.display='block';notice.className='unlock-notice';
+    notice.innerHTML=`🎉 레벨 ${newMu} 해금!<br><span style="font-size:.82rem;">이제 레벨 ${newMu}부터 시작 가능!</span>`;
+    launchFW(5);sndLv();
+  } else {
+    notice.style.display='none';
+    if(G.wordsOk>=2)launchFW(4);
+  }
+  if(G.wordsOk>=2)sndWord();
+  renderLvBtns();
+}
+
+// ══════════════════════════════════════
+//  FIREWORKS
+// ══════════════════════════════════════
+const fwC=document.getElementById('fwCanvas');
+const fwX=fwC.getContext('2d');
+let fwP=[],fwR=null;
+function resizeFW(){fwC.width=window.innerWidth;fwC.height=window.innerHeight;}
+window.addEventListener('resize',resizeFW);resizeFW();
+function launchFW(n=1){
+  sndFw();
+  const cols=['#ff5e5e','#ffd93d','#58c96a','#5aadff','#9b8ffd','#ff85e0','#3ecfbf','#ff8c42'];
+  for(let ci=0;ci<n;ci++){
+    setTimeout(()=>{
+      if(ci>0)sndFw();
+      const cx=window.innerWidth*.14+Math.random()*window.innerWidth*.72;
+      const cy=window.innerHeight*.07+Math.random()*window.innerHeight*.33;
+      for(let i=0;i<80;i++){const ang=(Math.PI*2*i)/80+(Math.random()-.5)*.13,spd=2+Math.random()*7;fwP.push({x:cx,y:cy,vx:Math.cos(ang)*spd,vy:Math.sin(ang)*spd,life:1,color:cols[i%cols.length],size:2+Math.random()*5,trail:[],type:'spark'});}
+      for(let i=0;i<18;i++){const ang=Math.random()*Math.PI*2,spd=1+Math.random()*4;fwP.push({x:cx,y:cy,vx:Math.cos(ang)*spd,vy:Math.sin(ang)*spd-1,life:1,color:'#fff',size:3+Math.random()*4,type:'star'});}
+    },ci*320);
+  }
+  if(!fwR)animFW();
+}
+function animFW(){
+  fwX.clearRect(0,0,fwC.width,fwC.height);fwP=fwP.filter(p=>p.life>0&&p.size>0);
+  fwP.forEach(p=>{
+    if(p.trail){p.trail.push({x:p.x,y:p.y,l:p.life});if(p.trail.length>6)p.trail.shift();}
+    p.x+=p.vx;p.y+=p.vy;p.vy+=.1;p.vx*=.97;p.vy*=.97;p.life-=.016;
+    if(p.trail)p.trail.forEach((t,i)=>{fwX.globalAlpha=t.l*(i/p.trail.length)*.38;fwX.fillStyle=p.color;fwX.beginPath();fwX.arc(t.x,t.y,Math.max(0,p.size*.5*(i/p.trail.length)),0,Math.PI*2);fwX.fill();});
+    fwX.globalAlpha=p.life*(p.type==='star'?Math.abs(Math.sin(p.life*20)):1);
+    fwX.fillStyle=p.color;fwX.shadowColor=p.color;fwX.shadowBlur=p.type==='star'?12:6;
+    fwX.beginPath();fwX.arc(p.x,p.y,Math.max(0,p.size*p.life),0,Math.PI*2);fwX.fill();fwX.shadowBlur=0;
+  });
+  fwX.globalAlpha=1;
+  if(fwP.length>0)fwR=requestAnimationFrame(animFW);
+  else{fwR=null;fwX.clearRect(0,0,fwC.width,fwC.height);}
+}
+
+// ══════════════════════════════════════
+//  UTILS
+// ══════════════════════════════════════
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+</script>
+</body>
+</html>
